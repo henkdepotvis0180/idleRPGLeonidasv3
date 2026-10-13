@@ -15,7 +15,7 @@ Content staat in `src/content/`; modules en balansregels in `src/config.ts`. Een
 - Playwright/Chromium op 390 × 844 en 320 × 740: classkeuze, schermen, zestien gearslots, save/reload, offline claim, zegenkeuze, equip/unequip, verhaalclaim, alle drie daily claims, shop en gebieden wisselen.
 - Geen JavaScript-runtimefouten of horizontale overflow in die browsercontroles.
 
-### APK-controle
+### Lokale cloud-APK-controle
 
 - Standalone Android release-variant gebouwd in de cloud; laatste Gradle-build geslaagd.
 - Versie `0.2.0`, versionCode `1`, package `com.leonidas.idlerpgv3`.
@@ -24,9 +24,9 @@ Content staat in `src/content/`; modules en balansregels in `src/config.ts`. Een
 - APK Signature Scheme v2 geverifieerd; testsignatuur.
 - APK-grootte: 45.555.023 bytes (ongeveer 43,4 MiB).
 - SHA-256: `cd35c8ad63dd3c1bfe8d3cf4c6bd130e42b7f3e774b5d54e82a1b2eb32a0087e`.
-- APK en checksum beschikbaar bij [release v0.2.0](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.2.0).
+- De gepubliceerde APK wordt ook afzonderlijk door GitHub Actions gebouwd en krijgt een eigen checksum. Download APK en bijbehorende checksum bij [release v0.2.0](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.2.0).
 
-Er is geen fysiek Android-toestel of Android-emulator gebruikt. De GitHub-workflow is toegevoegd; de uitvoerstatus staat in Actions en wordt los van de lokale cloudchecks bijgehouden.
+Er is geen fysiek Android-toestel of Android-emulator gebruikt. GitHub Actions heeft ook de TypeScript-, gameplay- en browserchecks doorlopen. De workflow `Publish Android alpha` publiceert de succesvolle Android-build als release; de publicatie bevat de checksum van die CI-build. De rechtstreekse binary-upload vanuit de cloudwerkmap gaf een authenticatiefout op uploads.github.com; publicatie via de ingebouwde GitHub Actions-token voorkomt die beperking.
 
 ### Vervolg
 

@@ -45,7 +45,7 @@ npm run apk
 
 Het script genereert de native Android-map en bouwt voor ARM64-telefoons en x86_64-emulators. Output: `artifacts/idleRPGLeonidasv3-0.2.0.apk`, inclusief SHA-256-controlebestand. `android/`, caches, sleutels en buildoutputs staan buiten Git. APK's worden als releasebestand en als Actions-artifact gedeeld.
 
-Op GitHub draait **Android test APK** na een push naar `main` of via **Actions → Run workflow**. De workflow controleert TypeScript, gameplay en browserbediening voordat hij de APK bouwt.
+Op GitHub draait **Android test APK** na een push naar `main` of via **Actions → Run workflow**. De workflow controleert TypeScript, gameplay en browserbediening voordat hij de APK bouwt. Met **Publish Android alpha → Run workflow** kun je daarna de run-ID van een geslaagde APK-build opgeven om die APK met checksum en changelog als prerelease te publiceren. Deze publicatiestap wacht op een lopende build en gebruikt de exacte geteste commit.
 
 Browsercontroles uitvoeren (web is alleen een testhulpmiddel; Android is het distributiedoel):
 

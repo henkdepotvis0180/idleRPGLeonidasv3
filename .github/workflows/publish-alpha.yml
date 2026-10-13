@@ -1,0 +1,61 @@
+name: Publish Android alpha
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Android test APK workflow run ID (waits if still running)
+        required: true
+        type: string
+permissions:
+  actions: read
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SOURCE_RUN: ${{ inputs.run_id }}
+    steps:
+      - name: Wait for the tested APK and validate its source
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$SOURCE_RUN" =~ ^[0-9]+$ ]]
+          test "$(gh run view "$SOURCE_RUN" --json workflowName --jq .workflowName)" = 'Android test APK'
+          test "$(gh run view "$SOURCE_RUN" --json headBranch --jq .headBranch)" = main
+          gh run watch "$SOURCE_RUN" --exit-status --interval 30
+          test "$(gh run view "$SOURCE_RUN" --json conclusion --jq .conclusion)" = success
+          source_sha=$(gh run view "$SOURCE_RUN" --json headSha --jq .headSha)
+          [[ "$source_sha" =~ ^[0-9a-f]{40}$ ]]
+          echo "sha=$source_sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.source.outputs.sha }}
+      - name: Download verified build outputs
+        run: gh run download "$SOURCE_RUN" --name idleRPGLeonidasv3-test-apk --dir artifacts
+      - name: Verify checksum
+        working-directory: artifacts
+        run: sha256sum --check *.sha256
+      - name: Publish alpha APK and update notes
+        env:
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version=$(node -p "require('./package.json').version")
+          [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          {
+            printf '# Leonidas V3 %s — Android test-alpha\n\n' "$version"
+            printf 'Download de APK hieronder op een Android 7.0+ ARM64-telefoon. Geen Expo Go of ontwikkelserver nodig. Testsignatuur; nog geen test op een fysiek toestel.\n\n'
+            printf 'Gebouwd na geslaagde TypeScript-, gameplay- en Playwright-controles in GitHub Actions.\n\n'
+            printf 'Build: https://github.com/%s/actions/runs/%s\n\n' "$GH_REPO" "$SOURCE_RUN"
+            printf '## SHA-256\n\n```\n'
+            cat artifacts/*.sha256
+            printf '```\n\n'
+            cat CHANGELOG.md
+            printf '\n[Updatelog](https://github.com/%s/blob/main/UPDATELOG.md) · [Uitbreidhandleiding](https://github.com/%s/blob/main/docs/EXTENDING.md)\n' "$GH_REPO" "$GH_REPO"
+          } > release-notes.md
+          gh release create "v$version" artifacts/*.apk artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android-alpha" --notes-file release-notes.md --prerelease
