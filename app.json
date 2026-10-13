@@ -1,0 +1,20 @@
+{
+  "expo": {
+    "name": "Leonidas V3",
+    "slug": "idle-rpg-leonidas-v3",
+    "version": "0.2.0",
+    "orientation": "portrait",
+    "platforms": [
+      "android",
+      "web"
+    ],
+    "userInterfaceStyle": "dark",
+    "android": {
+      "package": "com.leonidas.idlerpgv3",
+      "versionCode": 1
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ]
+  }
+}

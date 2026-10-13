@@ -1,0 +1,54 @@
+name: Android test APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck && npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:ui
+        env:
+          EXPO_NO_TELEMETRY: '1'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-screenshots
+          path: artifacts/screenshots/
+          if-no-files-found: ignore
+  apk:
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - run: npm ci
+      - run: npm run apk
+      - uses: actions/upload-artifact@v4
+        with:
+          name: idleRPGLeonidasv3-test-apk
+          path: |
+            artifacts/*.apk
+            artifacts/*.sha256
+          if-no-files-found: error
