@@ -1,6 +1,12 @@
 import React from "react";
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import {
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+  StyleSheet,
+  useWindowDimensions,
+} from "react-native";
 import { SvgXml } from "react-native-svg";
 import { ZONES, BIOMES } from "../content";
 import { regionNodes, navigateTo, changeZone, type State } from "../engine";
@@ -14,11 +20,17 @@ export function WorldMap({
   close: () => void;
   act: (fn: (s: State) => State) => void;
 }) {
+  const screen = useWindowDimensions();
   const nodes = regionNodes(state),
     b = BIOMES[state.zone % BIOMES.length];
   return (
-    <Modal animationType="slide" onRequestClose={close}>
-      <SafeAreaView style={ui.root}>
+    <View
+      style={[
+        StyleSheet.absoluteFill,
+        { zIndex: 40, backgroundColor: "#151e2c" },
+      ]}
+    >
+      <View style={ui.root}>
         <View style={[ui.row, { padding: 14 }]}>
           <View>
             <Text style={ui.eyebrow}>
@@ -39,7 +51,7 @@ export function WorldMap({
           </Text>
           <View
             style={{
-              height: 330,
+              height: Math.min(300, screen.height * 0.34),
               backgroundColor: b.ground,
               borderRadius: 18,
               overflow: "hidden",
@@ -182,7 +194,7 @@ export function WorldMap({
             </Pressable>
           ))}
         </ScrollView>
-      </SafeAreaView>
-    </Modal>
+      </View>
+    </View>
   );
 }

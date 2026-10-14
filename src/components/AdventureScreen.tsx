@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
+  BackHandler,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -101,6 +102,17 @@ export function AdventureScreen({
   useEffect(() => {
     if (state.run.choicePending || state.lastBoss) setJournal(true);
   }, [state.run.choicePending, state.lastBoss]);
+  useEffect(() => {
+    if (!map) return;
+    const subscription = BackHandler.addEventListener(
+      "hardwareBackPress",
+      () => {
+        setMap(false);
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [map]);
   return (
     <View style={{ flex: 1, minHeight: 300, backgroundColor: "#273b3f" }}>
       <BattleScene

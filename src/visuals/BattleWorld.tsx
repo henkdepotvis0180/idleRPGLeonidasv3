@@ -92,6 +92,7 @@ function CameraRig({ state, preview }: { state: State; preview: boolean }) {
   const focus = useRef(new THREE.Vector3(0, 1, 0)),
     pos = useRef(new THREE.Vector3()),
     target = useRef(new THREE.Vector3());
+  const initialised = useRef(false);
   const previous = useRef(state.world.camera),
     progress = useRef(1),
     orbit = useRef(Math.PI);
@@ -139,6 +140,11 @@ function CameraRig({ state, preview }: { state: State; preview: boolean }) {
         z + (roam ? 7 : 5.1),
       );
       target.current.set(x, roam ? 0 : 0.8, z + (roam ? -1.7 : -1.2));
+    }
+    if (!initialised.current) {
+      camera.position.copy(pos.current);
+      focus.current.copy(target.current);
+      initialised.current = true;
     }
     camera.position.lerp(
       pos.current,
