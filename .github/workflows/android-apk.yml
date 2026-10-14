@@ -59,6 +59,12 @@ jobs:
             artifacts/*.sha256
           if-no-files-found: error
 
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-hermes-sourcemap
+          path: android/app/build/generated/sourcemaps/react/release/index.android.bundle.map
+          if-no-files-found: error
+
   android_smoke:
     needs: apk
     runs-on: ubuntu-latest
