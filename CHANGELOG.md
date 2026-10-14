@@ -35,6 +35,7 @@
 - Separate class kits, appearance palettes, 3D world/models, canvas adapters, audio lifecycle and UI panels into modules.
 - Add coverage for all ability kits, spell kills, effects, cooldowns, transformations, rarity, customization and schema-2 migration.
 - Add real WebGL browser checks and an installed-APK Android emulator smoke workflow.
+- Resolve Three’s ESM renderer on Android for Hermes compatibility and retain native source maps in CI.
 
 ## 0.2.0 — 14 October 2026
 

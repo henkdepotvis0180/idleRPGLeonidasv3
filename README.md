@@ -18,7 +18,7 @@ Android 7.0+, ARM64 and OpenGL ES 3-capable hardware are recommended. The APK in
 - English UI, story, class descriptions, item names, quests, documentation and release notes.
 - Automatic migration of 0.2.0 saves: class, level, currency, inventory, gear, quests and boss progress are retained. Existing equipment stats are preserved; new loot uses the revised balance.
 
-<img src="docs/preview.png" width="320" alt="Leonidas 0.3.0 real-time 3D battle preview"> <img src="docs/wardrobe.png" width="320" alt="Customizable 3D hero with equipped gear">
+<img src="docs/preview.png" width="320" alt="Leonidas 0.3.0 native Android emulator battle capture"> <img src="docs/wardrobe.png" width="320" alt="Customizable 3D hero with equipped gear">
 
 The game also includes three zones, nine ordinary enemy definitions, three bosses, a main story, three daily quests, ten-encounter runs with blessing choices, four purchasable bags, a shop and offline XP/gold. Dailies reset at **00:00 UTC**. Offline rewards accrue at one ordinary enemy reward per 30 seconds, capped at eight hours per absence; they do not award loot, boss wins or quest kills.
 
