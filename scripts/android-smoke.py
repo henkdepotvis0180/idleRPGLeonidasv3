@@ -88,11 +88,20 @@ try:
  screenshot('07-customized-drakari.png')
  tap('Mage',scroll=True)
  tap('Open Adventure')
+ # Read the spell/transport bounds while paused, then perform a human-speed combo.
+ # Reconnecting an inspector between casts would allow several idle encounters to finish.
+ root=hierarchy()
+ def bounds(label):
+  node=next(n for n in root.iter('node') if n.get('content-desc')==label and n.get('visible')=='true')
+  return tuple(map(int,re.findall(r'-?\d+',node.get('bounds',''))))
+ spell_buttons={label:bounds(label) for label in ['Ember Lance · Cast','Frost Nova · Cast']}
+ pause_bounds=bounds('Resume expedition')
  tap('Resume expedition')
- tap('Ember Lance · Cast')
- tap('Frost Nova · Cast')
+ for label,rect in [*spell_buttons.items(),('Pause expedition',pause_bounds)]:
+  x1,y1,x2,y2=rect
+  print('TAP COMBO',label,rect,flush=True)
+  adb('shell','input','swipe',str((x1+x2)//2),str((y1+y2)//2),str((x1+x2)//2),str((y1+y2)//2),'150');time.sleep(.3)
  screenshot('08-elemental-spells.png')
- tap('Pause expedition')
  tap('Open Settings')
  tap('Music off',scroll=True)
  time.sleep(2)
