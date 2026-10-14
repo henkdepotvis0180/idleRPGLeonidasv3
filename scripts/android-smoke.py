@@ -10,6 +10,7 @@ def hierarchy():
  for _ in range(3):
   result=adb('shell','uiautomator','dump','--compressed','/sdcard/leonidas-window.xml',check=False)
   raw=adb('shell','cat','/sdcard/leonidas-window.xml',check=False)
+  (OUT/'last-window.xml').write_bytes(raw)
   assert b'3D graphics could not start' not in raw, 'Native 3D renderer failed'
   try:return ET.fromstring(raw)
   except ET.ParseError:time.sleep(1)
@@ -24,7 +25,8 @@ def tap(label,scroll=False):
     if len(values)==4:
      x1,y1,x2,y2=values
      if x2>x1 and y2>y1:
-      adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(1);return
+      print('TAP',label,node.get('bounds',''),flush=True)
+      adb('shell','input','tap',str((x1+x2)//2),str((y1+y2)//2));time.sleep(1.5);return
   # A fast spell kill may reach a rest point while accessibility is being queried.
   # Pick the same player blessing used in balance tests, then resume the requested control.
   if label=='Pause expedition':
@@ -46,15 +48,22 @@ try:
  assert adb('shell','pidof',APP).strip(), 'App process is not running'
  screenshot('01-class-selection.png')
  tap('Begin as Bastion',scroll=True)
- screenshot('02-battle.png')
  tap('Pause expedition')
+ time.sleep(3)
+ screenshot('02-battle.png')
  tap('Explore region')
  tap('Switch to third person')
  time.sleep(2)
  tap('Move east')
  tap('Move north')
  screenshot('03-third-person.png')
- tap('Open world map')
+ for attempt in range(3):
+  tap('Open world map')
+  time.sleep(2)
+  root=hierarchy()
+  if any(n.get('content-desc')=='Close map' for n in root.iter('node')):break
+  screenshot('map-not-open-'+str(attempt)+'.png')
+ else:raise AssertionError('Map tap did not present the native atlas')
  screenshot('04-world-map.png')
  tap('Walk to Moonlit Cairn')
  time.sleep(4)
@@ -95,3 +104,5 @@ try:
  print('PASS: installed Android APK, large native 3D battlefield, third person/camera swap, movement/map/cache, tactical positions, race/faction customization, two elemental spells, music toggles, no fatal native/JS logs')
 finally:
  (OUT/'logcat.txt').write_bytes(adb('logcat','-d',check=False))
+ (OUT/'last-window.xml').write_bytes(adb('shell','cat','/sdcard/leonidas-window.xml',check=False))
+ screenshot('final-screen.png')
