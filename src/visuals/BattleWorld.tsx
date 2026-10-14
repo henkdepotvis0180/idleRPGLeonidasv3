@@ -363,7 +363,7 @@ export function BattleWorld({
           )}
           <group ref={spell}>
             {arrow ? (
-              <group rotation={[Math.PI / 2, 0, 0]}>
+              <group rotation={[-Math.PI / 2, 0, 0]}>
                 <Block size={[0.08, 2, 0.08]} color="#e3d3af" />
                 <mesh position={[0, 1.1, 0]}>
                   <coneGeometry args={[0.2, 0.4, 4]} />
