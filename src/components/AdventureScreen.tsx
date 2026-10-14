@@ -158,7 +158,9 @@ export function AdventureScreen({
                   {currentEnemy(state).name}
                   {state.world.elite ? " · ELITE" : ""}
                 </Text>
-                <Text style={styles.caption}>{state.enemyHp} HP</Text>
+                <Text style={styles.caption}>
+                  {state.enemyHp} HP{!running ? " · PAUSED" : ""}
+                </Text>
               </View>
               <Bar
                 value={state.enemyHp}
@@ -241,11 +243,6 @@ export function AdventureScreen({
             <Text style={styles.chipText}>{roam ? "FIGHT" : "ROAM"}</Text>
           </Pressable>
         </View>
-        {!running && !roam && (
-          <Text pointerEvents="none" style={styles.pause}>
-            EXPEDITION PAUSED
-          </Text>
-        )}
         {roam && (
           <View style={styles.roamControls}>
             <MovePad move={move} active={active && !map && !journal} />

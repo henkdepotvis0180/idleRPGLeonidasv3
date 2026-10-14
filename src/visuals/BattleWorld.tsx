@@ -286,7 +286,7 @@ function WorldScene({
         point.project(camera);
         return {
           x: THREE.MathUtils.clamp((point.x + 1) / 2, 0.08, 0.86),
-          y: THREE.MathUtils.clamp((1 - point.y) / 2, 0.2, 0.84),
+          y: THREE.MathUtils.clamp((1 - point.y) / 2, 0.4, 0.84),
         };
       };
       onAnchors({
