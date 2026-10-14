@@ -1,0 +1,5 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.leonidas.smoketools">
+  <uses-sdk android:minSdkVersion="24" android:targetSdkVersion="35"/>
+  <application android:label="Leonidas test tools" android:debuggable="true"/>
+  <instrumentation android:name="com.leonidas.smoketools.DumpInstrumentation" android:targetPackage="com.leonidas.smoketools"/>
+</manifest>
