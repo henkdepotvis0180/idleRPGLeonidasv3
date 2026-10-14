@@ -1,3 +1,4 @@
+import { RACES, type RaceId } from "./content/world.ts";
 export const SKIN_TONES = [
   "#f4cba6",
   "#dca77c",
@@ -5,6 +6,25 @@ export const SKIN_TONES = [
   "#895739",
   "#604333",
 ];
+/** Heritage keeps its hue while every skin-tone choice still changes the actual model. */
+export function skinPalette(raceId: RaceId): string[] {
+  const base = RACES.find((r) => r.id === raceId)?.skin;
+  if (!base) return SKIN_TONES;
+  return [1.18, 1, 0.83, 0.67, 0.52].map(
+    (factor) =>
+      "#" +
+      [1, 3, 5]
+        .map((offset) =>
+          Math.min(
+            255,
+            Math.round(parseInt(base.slice(offset, offset + 2), 16) * factor),
+          )
+            .toString(16)
+            .padStart(2, "0"),
+        )
+        .join(""),
+  );
+}
 export const HAIR_COLORS = [
   "#493124",
   "#d3a659",

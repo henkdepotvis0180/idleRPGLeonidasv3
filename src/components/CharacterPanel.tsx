@@ -9,7 +9,7 @@ import {
   ACCENT_COLORS,
   HAIR_COLORS,
   HAIR_STYLES,
-  SKIN_TONES,
+  skinPalette,
   type Appearance,
 } from "../appearance";
 import { customize, switchClass, unequip, type State } from "../engine";
@@ -56,7 +56,7 @@ export function CharacterPanel({
       <HeritagePanel state={state} act={act} />
       <Card>
         <Text style={ui.subheading}>Appearance</Text>
-        {swatches("Skin tone", "skin", SKIN_TONES)}
+        {swatches("Skin tone", "skin", skinPalette(state.race))}
         {swatches("Hair color", "hair", HAIR_COLORS)}
         {swatches("Outfit accent", "accent", ACCENT_COLORS)}
         <Text style={ui.small}>Hair style</Text>

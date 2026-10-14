@@ -3,7 +3,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { State } from "../engine";
 import { classFor, RACES, RARITIES, type Slot } from "../content";
-import { ACCENT_COLORS, SKIN_TONES, HAIR_COLORS } from "../appearance";
+import { ACCENT_COLORS, skinPalette, HAIR_COLORS } from "../appearance";
 import { Weapon, Beast, type Motion } from "./Models";
 import { SURFACES } from "./materials";
 const value = (v: Motion) => (typeof v === "number" ? v : v.current);
@@ -57,7 +57,7 @@ function HeroFigure({
   const c = classFor(state.classId),
     a = state.appearance,
     race = RACES.find((r) => r.id === state.race) ?? RACES[0];
-  const skin = race.skin ?? SKIN_TONES[a.skin],
+  const skin = skinPalette(state.race)[a.skin],
     hair = HAIR_COLORS[a.hair],
     accent = ACCENT_COLORS[a.accent];
   const armor = (slot: Slot, fallback = "#606b72") =>
