@@ -18,7 +18,7 @@ def hierarchy():
  raise AssertionError('Android UI hierarchy could not be read: '+output.decode(errors='replace'))
 
 def tap(label,scroll=False):
- for _ in range(8 if scroll else 3):
+ for _ in range(14 if scroll else 4):
   root=hierarchy()
   rest=next((n for n in root.iter('node') if n.get('content-desc')=='Sun Shard · +4 attack this run'),None)
   if rest is not None and label!='Sun Shard · +4 attack this run':
