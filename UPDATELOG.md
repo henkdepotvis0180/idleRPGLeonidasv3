@@ -8,7 +8,7 @@ The presentation moves away from chibi proportions toward taller articulated fig
 
 The package remains `com.leonidas.idlerpgv3`, versionCode is `4` for the revised build, and schemas 2/3 migrate to schema 4 under the existing save key. Existing class, level, currencies, gear, appearance, quests and boss progress are retained. New saves include heritage, faction, companion ownership, tactics, world location, destination and camera choice.
 
-### Local validation
+### Validation
 
 - Strict TypeScript and all **49 gameplay/migration tests passed**, including 112 class/region progression simulations, exploration gates, companion effects, boss lane damage, critical/regen caps and schema-2/3 migration.
 - Real WebGL browser checks passed for the large viewport, all classes/bosses/races, third-person movement, camera swaps, atlas navigation/cache collection, companion hiring/switching, faction choice and tactics; 390 × 844 and 320 × 740 layouts are covered.
@@ -16,7 +16,24 @@ The package remains `com.leonidas.idlerpgv3`, versionCode is `4` for the revised
 
 The initial build 3 passed its complete workflow and was published at `v0.4.0`. A final screenshot review found that floating numbers used fixed screen positions. Build 4 projects the hero and enemy through the current 3D camera and keeps their numbers on the correct actor in both views. The initial release remains archived; use the revised [0.4.0 build 4](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0-r4) for the corrected presentation.
 
-Final build-4 workflow results and published checksums are recorded after verification.
+### Verified release record — build 4
+
+- [Complete successful source workflow](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/actions/runs/38552989309): TypeScript, 49 gameplay/migration tests, real WebGL/browser checks, native APK build and installed-APK Android checks.
+- [Successful publication](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/actions/runs/38553689767).
+- [Download revised 0.4.0 build 4 — APK, source ZIP and checksums](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0-r4).
+- Tested source commit: `5f77ef49dac6ee7aa6d6752613104cf8d493ad88`.
+- Android 15 / API 35 x86_64 emulator: class selection, large 3D battlefield, movement, third-person/overview camera switching, atlas/cache interaction, tactics, race/faction customization, class change, both mage spells, music toggles and background/resume passed. Actual screenshots were reviewed; no fatal native/JavaScript errors were detected.
+- Browser checks also verify incoming/outgoing damage belongs to the correct projected actor in overview and third person, plus both 390 × 844 and 320 × 740 layouts.
+- Published APK: **56,302,009 bytes**, versionName `0.4.0`, versionCode `4`, minimum API 24, target API 36, ARM64 + x86_64.
+- APK SHA-256: `9e785662ac6df7dd276c7bf6f2fe4cbe25488238e58ae7708e6e8e830efe2f2a`.
+- Published source ZIP: **8,753,013 bytes**, 102 entries, archive commit matches the tested source; no generated native project, caches, APKs or credential/key files.
+- ZIP SHA-256: `4e679e79769aa646edfc1acc0e9642e10321b689e386b3308b03f66adf75ee8a`.
+- Both published files were downloaded again and their checksums verified. APK signature, package/version, embedded Hermes bundle (2,777,380 bytes), both native GL libraries and sixteen WAV assets were inspected.
+- Signing certificate SHA-256 matches 0.2.0, 0.3.0 and initial 0.4.0: `fac61745dc0903786fb9ede62a962b399f7348f0bb6f899b8332667591033b9c`.
+
+Native testing exposed stale accessibility coordinates during idle combat and a costly GL teardown during panel changes. The emulator-only live UI reader and paused rendering with a retained context make these transitions reliable. Native rendering is capped at 30 FPS, or 20 in low graphics; gameplay keeps its separate one-second tick. Physical-device performance remains a useful next feedback point.
+
+Screenshots in `docs/preview.png`, `docs/third-person.png` and `docs/world-atlas.png` come from the final build-4 Android check. The geared wardrobe image remains a browser/WebGL capture.
 
 ## 14 October 2026 — 0.3.0: heroes take shape
 

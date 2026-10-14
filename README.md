@@ -23,6 +23,8 @@ The standalone APK includes the game, models, textures and audio. No account, Ex
 
 The game takes broad genre inspiration from fantasy RPGs, with original names, artwork, geometry, maps, item descriptions, stories and synthesized music. The frontier is a regional open-world prototype: selectable regions contain compact walkable generated layouts, rather than a seamless continent or multiplayer world.
 
+<img src="docs/third-person.png" width="320" alt="Native Android third-person exploration"> <img src="docs/world-atlas.png" width="320" alt="Native Android procedural atlas with level requirements">
+
 ## Install or update
 
 Download `idleRPGLeonidasv3-0.4.0.apk` from the release and install it over the existing Leonidas V3 app. The package remains `com.leonidas.idlerpgv3`, Android versionCode is `4`, and the original storage key remains in use. Uninstalling removes local progress; saves do not sync across devices.
