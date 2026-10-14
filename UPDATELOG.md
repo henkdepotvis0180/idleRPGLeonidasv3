@@ -1,42 +1,25 @@
-# Updatelog
+# Update log
 
-## 14 oktober 2026 — V3-basis, versie 0.2.0
+## 14 October 2026 — 0.3.0: heroes take shape
 
-### Opgeleverd
+This release replaces the previous icon-based presentation with an original 3D chibi hero, visible worn gear, monsters and boss models. It adds fourteen class kits, twenty-eight active abilities, customization, rarity icons/colors, original music/SFX and an English interface. See [CHANGELOG.md](CHANGELOG.md) and [the class guide](docs/CLASSES.md).
 
-De nieuwe repository bevat de Android-gamebasis met verhaal, dagelijkse quests, uitgebreide uitrusting en roguelike runs. Bestaande Leonidas-prototypecode is als vertrekpunt gebruikt en uitgebreid; het app-ID van V3 is `com.leonidas.idlerpgv3`.
+### Compatibility and balance
 
-Content staat in `src/content/`; modules en balansregels in `src/config.ts`. Een nieuw gebied toevoegen maakt automatisch een wereldkaart-entry en hoofdquest aan. Zie [EXTENDING.md](docs/EXTENDING.md).
+The package remains `com.leonidas.idlerpgv3`; versionCode increases to `2`. Schema-2 saves from 0.2.0 upgrade to schema 3 under the same storage key. Existing currencies, classes, levels, equipped/inventory gear, quests and boss flags are retained. Old item names are translated; existing stats remain. New loot, rewards and armor mitigation use the revised balance. The local APK's signing certificate has been checked against 0.2.0 and matches, allowing an in-place update.
 
-### Cloudvalidatie
+### Validation
 
-- TypeScript strict-controle geslaagd.
-- 18 gameplaytests geslaagd, inclusief combat, armor, quests, savevalidatie, offline-cap, alle vier classes tegen de eerste baas, uitbreiden met een gebied en uitgeschakelde modules.
-- Playwright/Chromium op 390 × 844 en 320 × 740: classkeuze, schermen, zestien gearslots, save/reload, offline claim, zegenkeuze, equip/unequip, verhaalclaim, alle drie daily claims, shop en gebieden wisselen.
-- Geen JavaScript-runtimefouten of horizontale overflow in die browsercontroles.
+- TypeScript and gameplay/migration coverage run locally in the cloud.
+- Playwright checks real WebGL pixels, all fourteen class models/weapon styles, customization, equipment, rarity, shapeshifting, quests, shop, settings and schema-2 migration in the actual app.
+- Browser layouts checked at 390 × 844 and 320 × 740.
+- Native standalone Android APK build completed locally in the cloud.
+- GitHub CI build, installed-APK emulator smoke test and published-artifact checks are recorded below after completion.
 
-### Gepubliceerde APK — gecontroleerd
+### Release record
 
-- Standalone Android release-variant zowel lokaal in de cloud als via GitHub Actions gebouwd. Beide builds geslaagd.
-- Versie `0.2.0`, versionCode `1`, package `com.leonidas.idlerpgv3`.
-- Minimaal Android 7.0 (API 24), target API 36; ARM64 en x86_64.
-- Ingebouwde Hermes-gamebundle aanwezig (1.356.136 bytes), zonder ontwikkelserver te starten.
-- APK Signature Scheme v2 geverifieerd; testsignatuur.
-- APK-grootte: 45.555.019 bytes (ongeveer 43,4 MiB).
-- SHA-256: `c3e8c491e194b0a1a478e4105f366053d8e6cea69e55b6f17ca64aadac66831b`.
-- Download APK en bijbehorende checksum bij [release v0.2.0](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.2.0).
+Publication verification pending. This section will be updated with the successful workflow, APK checksum and Android emulator outcome before handoff.
 
-De gepubliceerde APK is teruggedownload van GitHub. De SHA-256-checksum, v2-handtekening, app-ID, minimale Android-versie, architecturen en ingebouwde gamebundle zijn opnieuw gecontroleerd.
+## 14 October 2026 — 0.2.0 foundation
 
-- [Geslaagde checks en Android-build](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/actions/runs/38483805511).
-- [Geslaagde releasepublicatie](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/actions/runs/38483837240).
-- Geteste releasecommit: `dc0ad51dc3097318ab113cda6b4c9909e206a9fc`.
-
-Er is geen fysiek Android-toestel of Android-emulator gebruikt. De workflow `Publish Android alpha` publiceert een geslaagde Android-build met de bijbehorende checksum via de ingebouwde GitHub Actions-token.
-
-### Vervolg
-
-1. APK op een echte telefoon spelen en balans/bediening beoordelen.
-2. Eigen heldensprites, audio en classvaardigheden toevoegen.
-3. Nieuwe gebieden, bazen en loot uitbreiden via contentbestanden.
-4. Voor distributie een vaste releasesleutel, savemigraties en eventueel cloudsave toevoegen.
+The initial V3 release introduced the core idle combat, gear, quests, story, roguelike runs and local save system. Eighteen gameplay tests and browser checks passed; a standalone APK was built and published through GitHub Actions. The user subsequently confirmed that playing past the first boss worked on their Android device.

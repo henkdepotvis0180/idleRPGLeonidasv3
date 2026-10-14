@@ -12,6 +12,9 @@ export const RULES = {
   maxBags: 4,
   bagPrice: 150,
   lootChance: 0.25,
+  bossRewardMultiplier: 2,
+  storyGold: 60,
+  storyXpPerChapter: 50,
   offlineCapSeconds: 8 * 3600,
-  offlineKillSeconds: 12,
+  offlineKillSeconds: 30,
 } as const;

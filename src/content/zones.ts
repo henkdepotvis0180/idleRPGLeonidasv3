@@ -21,23 +21,23 @@ export type Zone = {
 export const ZONES: Zone[] = [
   {
     id: "woods",
-    name: "Het Fluisterwoud",
-    subtitle: "Hoofdstuk I · Het verdwenen licht",
+    name: "Whispering Woods",
+    subtitle: "Chapter I · The missing light",
     level: 1,
     enemies: [
-      { id: "wolf", name: "Mistwolf", art: "wolf", hp: 38, attack: 5 },
+      { id: "wolf", name: "Mist Wolf", art: "wolf", hp: 38, attack: 5 },
       {
         id: "spirit",
-        name: "Verdwaalde bosgeest",
+        name: "Lost Forest Spirit",
         art: "ghost",
         hp: 32,
         attack: 7,
       },
-      { id: "alpha", name: "Schemerwolf", art: "wolf", hp: 46, attack: 6 },
+      { id: "alpha", name: "Dusk Wolf", art: "wolf", hp: 46, attack: 6 },
     ],
     boss: {
       id: "rootking",
-      name: "De Wortelkoning",
+      name: "The Root King",
       art: "boss",
       hp: 190,
       attack: 10,
@@ -46,19 +46,25 @@ export const ZONES: Zone[] = [
     gold: 8,
     color: "#427769",
     story:
-      "Sinds de zon brak, bewegen de wouden zonder wind. Jij draagt een splinter van het laatste daglicht. Vind de Wortelkoning: hij weet wie de zon heeft gestolen.",
+      "Since the sun shattered, the woods move without wind. You carry a shard of the last daylight. Find the Root King: he knows who stole the sun.",
   },
   {
     id: "ruins",
-    name: "Asgrauwe Ruïnes",
-    subtitle: "Hoofdstuk II · Onder de oude troon",
+    name: "Ashen Ruins",
+    subtitle: "Chapter II · Beneath the old throne",
     level: 4,
     enemies: [
-      { id: "ashguard", name: "Aswachter", art: "ghost", hp: 100, attack: 10 },
-      { id: "ashwolf", name: "Roetwolf", art: "wolf", hp: 90, attack: 12 },
+      {
+        id: "ashguard",
+        name: "Ash Sentinel",
+        art: "ghost",
+        hp: 100,
+        attack: 10,
+      },
+      { id: "ashwolf", name: "Cinder Wolf", art: "wolf", hp: 90, attack: 12 },
       {
         id: "echo",
-        name: "Echo van de troon",
+        name: "Throne Echo",
         art: "ghost",
         hp: 115,
         attack: 9,
@@ -66,7 +72,7 @@ export const ZONES: Zone[] = [
     ],
     boss: {
       id: "ashlady",
-      name: "Vrouwe van As",
+      name: "Lady of Ash",
       art: "boss",
       hp: 500,
       attack: 20,
@@ -75,25 +81,25 @@ export const ZONES: Zone[] = [
     gold: 18,
     color: "#8c635d",
     story:
-      "De Wortelkoning was een bewaker. Zijn laatste woorden wijzen naar de asgrauwe troon. Vrouwe van As bewaart daar een schuld die ouder is dan het koninkrijk.",
+      "The Root King was a guardian. His final words lead to an ashen throne, where the Lady of Ash keeps a debt older than the kingdom.",
   },
   {
     id: "spire",
-    name: "De Sterrentoren",
-    subtitle: "Hoofdstuk III · Een gebroken hemel",
+    name: "Starfall Spire",
+    subtitle: "Chapter III · A shattered sky",
     level: 8,
     enemies: [
       {
         id: "wraith",
-        name: "Sterrenwraith",
+        name: "Star Wraith",
         art: "ghost",
         hp: 220,
         attack: 18,
       },
-      { id: "voidwolf", name: "Leegtewolf", art: "wolf", hp: 190, attack: 22 },
+      { id: "voidwolf", name: "Void Wolf", art: "wolf", hp: 190, attack: 22 },
       {
         id: "clockguard",
-        name: "Klokkenwachter",
+        name: "Clockwork Sentinel",
         art: "ghost",
         hp: 250,
         attack: 16,
@@ -101,7 +107,7 @@ export const ZONES: Zone[] = [
     ],
     boss: {
       id: "hourdevourer",
-      name: "De Uurverslinder",
+      name: "The Hour Devourer",
       art: "boss",
       hp: 1100,
       attack: 36,
@@ -110,8 +116,8 @@ export const ZONES: Zone[] = [
     gold: 35,
     color: "#726199",
     story:
-      "De Vrouwe offerde de zon om de tijd stil te zetten. Boven de Sterrentoren eet iets nu de overgebleven uren. Klim omhoog en geef Leonidas zijn morgen terug.",
+      "The Lady sacrificed the sun to stop time. Above Starfall Spire, something devours the remaining hours. Climb the tower and bring tomorrow back to Leonidas.",
   },
 ];
 export const EPILOGUE =
-  "Het eerste licht keert terug. Toch tikt er diep onder de toren nog een tweede klok. Je avontuur is pas begonnen.";
+  "The first light returns. Yet deep beneath the tower, a second clock still ticks. Your adventure has only just begun.";

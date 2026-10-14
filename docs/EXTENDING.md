@@ -1,66 +1,67 @@
-# Content en modules aanpassen
+# Extending Leonidas
 
-## Een nieuw gebied met eindbaas
+## Content and optional modules
 
-Voeg een entry toe aan `ZONES` in `src/content/zones.ts`. De wereldkaart, levelvergrendeling, baasregistratie en hoofdquest worden automatisch toegevoegd.
+`src/config.ts` exposes independent shop, daily quest, offline reward and roguelike switches. Both UI and engine respect them. The main story and basic combat are the core. Restart/rebuild after changes. With roguelike disabled, combat does not wait for blessings and temporary blessing stats are ignored.
 
-```ts
-{
-  id: 'frost', // uniek en blijvend: opgeslagen baasvoortgang gebruikt deze ID
-  name: 'De Bevroren Poort',
-  subtitle: 'Hoofdstuk IV · Achter de klok',
-  level: 12,
-  enemies: [
-    { id: 'frostwolf', name: 'IJswolf', art: 'wolf', hp: 350, attack: 25 },
-    { id: 'frostghost', name: 'Bevroren ziel', art: 'ghost', hp: 400, attack: 22 },
-  ],
-  boss: { id: 'frostking', name: 'De IJskoning', art: 'boss', hp: 1800, attack: 48 },
-  xp: 95,
-  gold: 50,
-  color: '#557d98',
-  story: 'Onder de tweede klok slaapt een koninkrijk van ijs. Vind de sleutel achter de bevroren poort.',
-}
-```
+`RULES` defines bag capacity, run length, rest points, boss reward multiplier, story rewards and offline accrual. Rest points must come before the boss encounter. Changes to capacities, slot IDs or save structure need explicit migrations.
 
-`enemies` moet minstens één vijand bevatten. `art` kiest uit wolf, ghost en boss; voeg voor nieuwe illustraties een bron en licentie toe in `assets/ATTRIBUTION.md` en breid `BattleScene` uit. De vijand varieert per encounter en run. Bazen hebben eigen HP en aanval.
+## Add a zone and boss
 
-Voeg gebieden achteraan toe: saves gebruiken momenteel een index voor het huidige gebied en het geclaimde verhaalhoofdstuk. Herschikken/verwijderen vraagt een savemigratie. Baasoverwinningen gebruiken stabiele gebied-ID's, zonder limiet van 31 gebieden.
+Append a typed `Zone` entry to `ZONES` in `src/content/zones.ts`. The map, level gate and main quest appear automatically. Each zone needs a stable unique ID, name/subtitle, unlock level, a nonempty `enemies` list, one boss, XP/gold, color and story. Enemy definitions contain stable IDs, names, HP, attack and an `art` family (`wolf`, `ghost`, `boss`).
 
-## Modules wisselen
+Add a new visual family in `src/visuals/Models.tsx` for a new kind of monster. All current models are original procedural geometry; they do not require external models or downloads at runtime.
 
-Pas `MODULES` in `src/config.ts` aan en bouw opnieuw:
+Append rather than reorder zones: boss wins use stable IDs, but current zone and claimed chapter still use indexes. Removing/reordering requires migration.
 
-```ts
-export const MODULES = {
-  shop: false,
-  dailyQuests: true,
-  offlineRewards: true,
-  roguelike: false,
-} as const;
-```
+## Add a class or ability
 
-Deze switches gelden voor de UI én de engine. Met roguelike uit lopen gevechten door zonder keuzes en zonder tijdelijke bonusstats. Bestaande savegegevens blijven behouden. De hoofdquest en basiscombat zijn de kern; het wisselen van een compleet combatsysteem vraagt een eigen implementatie van de enginefuncties.
+Add a `HeroClass` in `src/content/classes.ts`: stable ID, name, archetype, description, icon, base attack/HP, color, weapon style, shield preference and two abilities. Existing weapon styles are sword, dagger, staff, bow, hammer, axe, fists, lute, wand and scythe. The visual adapter automatically picks the class's weapon and outfit color.
 
-`RULES` bevat onder andere runlengte, rustpunten, baggrootte en offline-cap. Rustpunten moeten vóór de eindbaas liggen. Structurele wijzigingen aan slots, savevelden of bagcapaciteit kunnen bestaande saves ongeldig maken: verhoog dan de saveversie en voeg een expliciete migratie toe. Deze eerste V3-alpha gebruikt saveversie 2; oude Leonidas-apps hebben een ander app-ID en delen geen opslag.
+An ability's supported effect fields are:
 
-## Items en armor
+| Field | Meaning |
+| --- | --- |
+| `damage` | Multiplier of current attack |
+| `heal` | Fraction of max HP restored; capped at max HP |
+| `shield` | Fraction of max HP absorbed by a temporary barrier |
+| `dot` | Attack multiplier applied each turn for `duration` turns, to this enemy only |
+| `stun` | Number of incoming enemy turns interrupted |
+| `form` | `wolf` or `bear`; visual transformation lasting `duration` turns |
+| `cooldown` | Combat turns before the ability is ready again |
+| `effect` | Steel, fire, frost, nature, holy, shadow, arcane, lightning or song visuals/audio |
 
-Een item heeft een unieke `id`, een `slot`, `attack`, `hp`, `armor`, `rarity` en `price`. `price` is in deze basis zowel de shopprijs als de verkoopwaarde. Alle classes mogen alle slots gebruiken. De twee ring- en trinketslots zijn afzonderlijke slots; de dropgenerator ondersteunt ze allemaal.
+Cooldowns freeze when combat is paused or awaiting a blessing. Active spells cannot be cast during blessing choices. A direct or damage-over-time kill uses the same loot/quest/reward path as a normal attack, preventing double rewards. Auto-casting uses one available ability per combat tick. Class changes start a new run and reset temporary combat state, while adapting weapon appearances and preserving permanent progress.
 
-Shopitems staan in `SHOP`. Dropgeneratie staat in `tick` in `src/engine.ts`. Een volle bag voorkomt nieuwe loot; uitrusten wisselt gear zonder items te verliezen. Armor telt op en trekt af van iedere vijandelijke aanval, tot minimaal één schade.
+For a new kind of effect, extend the engine, save validation, the effect type and the visual palette together. Add tests for the actual behavior rather than only checking definition shape.
 
-## Quests en zegens
+## Gear and appearance
 
-Elke zone krijgt automatisch een hoofdquest om de baas te verslaan, met een eenmalige beloning. Daily-definities in `src/content/quests.ts` gebruiken de bijgehouden tellers `kills`, `bosses` en `loot`. Een ander soort doel vraagt een nieuwe teller, updates in de engine en savevalidatie. Naam, doel en beloningen van bestaande dailytypen zijn direct instelbaar.
+`src/content/gear.ts` defines sixteen slots and five rarity tiers. Item stats are explicit; rarity affects newly generated loot through small multipliers. Shop prices and sell values currently share the same `price` field. Weapon visuals adapt to class when bought, dropped or when changing class; stats remain attached to the item.
 
-Een zegen in `BLESSINGS` bevat een stabiele ID en de statbonussen. Breid voor een nieuw type zegen het datumodel of de effectafhandeling uit. Zegens mogen meerdere keren in een run gekozen worden.
+Slots have original icons in `GearIcon.tsx` and visible attachments/colors in `Models.tsx`. Add both when introducing a slot. Jewelry appears as small gems; the main silhouette comes from helmet, shoulders, cloak, chest, gloves, boots, weapon and offhand.
 
-## Controleren en uitbrengen
+Appearance palettes live in `src/appearance.ts`. Changing palette lengths/order affects stored indexes, so migrate saves if you remove or reorder choices. The outfit accent colors the scarf independently from equipment rarity.
 
-1. `npm run typecheck` en `npm test`.
-2. `npx playwright install chromium` en `npm run test:ui`.
-3. Versie verhogen in `package.json`, `package-lock.json`, `app.json` en Android `versionCode` verhogen voor updates.
-4. `npm run apk` en testen op een echte Android-telefoon.
-5. `CHANGELOG.md` en `UPDATELOG.md` aanvullen; commit/push en APK met checksum toevoegen aan een GitHub-release.
+Armor uses diminishing returns: `armor / (armor + 35)`, capped at 60% mitigation, with a minimum of one damage. Existing 0.2.0 gear retains stats during migration; new loot uses the 0.3.0 economy.
 
-Gebruik voor publieke distributie een vaste privé-releasesleutel via CI-secrets of EAS. Commit nooit sleutels. De huidige APK en workflow gebruiken uitsluitend een testsignatuur.
+## Audio and original assets
+
+Run `python3 scripts/generate-audio.py` to regenerate the original deterministic music/SFX. No third-party samples or compositions are used. Expo Audio pauses all players when backgrounded and releases them on unmount. Music is initially off; effects are on. No microphone permission, recording or background playback is enabled.
+
+The launcher icon is original generated artwork. Asset provenance and legacy icon licenses are in `assets/ATTRIBUTION.md`.
+
+## Saves and releases
+
+The app ID and storage key are stable. Version 0.3.0 writes schema 3 and migrates schema 2 before validation. Keep the real schema-2 fixture test when changing migration behavior. Unknown or corrupted structures are rejected safely; development builds should not overwrite real device saves unintentionally.
+
+Before release:
+
+1. Run TypeScript, gameplay and browser/WebGL tests.
+2. Bump `package.json`, lockfile, `app.json` version and Android versionCode.
+3. Build the APK and run Android emulator checks; review screenshots and logcat.
+4. Verify the signing certificate matches the previous release if users should install over it.
+5. Update changelog/update log in English, push and publish the successful workflow's exact artifact.
+6. Verify the published download's checksum, signature, app ID and embedded bundle.
+
+Use a stable private signing key for public distribution. The current prototype uses a test key; key rotation requires an explicit update/migration plan.

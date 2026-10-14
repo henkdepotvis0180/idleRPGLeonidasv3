@@ -1,33 +1,36 @@
-# Leonidas V3 — idle roguelike RPG voor Android
+# Leonidas V3 — The Shattered Dawn
 
-Een speelbare, Nederlandstalige Android-gamebasis met automatische gevechten, loot en korte roguelike expedities. Gebouwd met React Native, Expo en TypeScript. Eigen wereld en verhaal, met inspiratie uit het idle RPG-genre en de vele uitrustingsslots van klassieke MMO's.
+An English-language idle roguelike RPG for Android, built with React Native, Expo, Three.js and React Three Fiber. Original chibi characters, worlds and effects take broad genre inspiration from fantasy RPGs without using their characters, assets, music or code.
 
-## APK downloaden
+**[Download the 0.3.0 Android alpha](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.3.0)** · [Changelog](CHANGELOG.md) · [Update log](UPDATELOG.md)
 
-Download **idleRPGLeonidasv3-0.2.0.apk** via [GitHub Releases](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.2.0). Open het bestand op je Android-telefoon en sta installatie vanuit je browser/bestandsbeheer toe wanneer Android daarom vraagt. Android 7.0+ en een ARM64-telefoon zijn vereist. De APK bevat de game en werkt zonder Expo Go, ontwikkelserver of account.
+Android 7.0+, ARM64 and OpenGL ES 3-capable hardware are recommended. The APK includes the game, models and audio; no Expo Go, development server or account is needed. A graceful graphics error message keeps gameplay available if a device cannot create the 3D context. This is a test alpha, not a Play Store release.
 
-Dit is een **test-alpha** met een testsignatuur. De lokale voortgang staat alleen op je toestel; verwijderen van de app wist je save. Voor betrouwbare toekomstige updates en Play Store-distributie is een vaste, privé beheerde releasesleutel nodig. Een nieuw gebouwde test-APK kan een andere sleutel hebben.
+## What is new in 0.3.0?
 
-<img src="docs/preview.png" alt="Leonidas V3 avontuurscherm — cloudbrowserpreview" width="320">
+- Real 3D battles and a wardrobe: your chibi hero, visible equipped gear, wolves, spirits and distinctive crowned bosses.
+- Fourteen playable classes with **28 active abilities**, cooldowns, optional auto-casting, healing, barriers, interrupts, curses and wolf/bear transformations.
+- Custom skin tone, hairstyle, hair color, outfit accent and face, saved on your device.
+- Sixteen equipment slots, original item icons and white/green/blue/purple/orange rarity borders. Weapons visually adapt to your class.
+- Sword/weapon swings, shield movement, lunges, hits, spell projectiles, floating damage and transformation effects.
+- A new launcher icon and original procedural ambient music, hit/spell sounds and a boss victory chime. Enable music in **Settings**; sound effects have their own switch.
+- Boss XP/gold reduced from 5× to 2×. Boss drops are no longer always epic. Smaller gear/blessing bonuses and diminishing armor mitigation (60% cap) keep progression meaningful.
+- English UI, story, class descriptions, item names, quests, documentation and release notes.
+- Automatic migration of 0.2.0 saves: class, level, currency, inventory, gear, quests and boss progress are retained. Existing equipment stats are preserved; new loot uses the revised balance.
 
-## Wat kun je spelen?
+<img src="docs/preview.png" width="320" alt="Leonidas 0.3.0 real-time 3D battle preview"> <img src="docs/wardrobe.png" width="320" alt="Customizable 3D hero with equipped gear">
 
-- Vier classes: Bastion, Sterrenwever, Schemermes en Klokkenbinder, met verschillende beginstats.
-- Drie gebieden met elk drie soorten vijanden, een eindbaas en een verhaalhoofdstuk.
-- Automatisch aanvallen; een bewegend woud, aanvalslunges, hitreacties en zwevende schadecijfers.
-- Runs van tien encounters, met een tijdelijke bonuskeuze na encounter 3, 6 en 9. Eindbaas verslagen of zelf verslagen? Tijdelijke zegens vervallen; gear, goud en level blijven.
-- Zestien gearslots: wapen, offhand, helm, halsketting, schouders, mantel, borst, polsen, handschoenen, riem, broek, laarzen, twee ringen en twee trinkets.
-- HP-, aanvals- en armorbonussen; armor vermindert inkomende schade tot minimaal één schade per klap.
-- Common, rare en epic loot; gegarandeerde eindbaasloot als je bag ruimte heeft.
-- Drie dagelijkse quests: 20 vijanden, één baas en drie lootstukken. Reset om 00:00 UTC (02:00 Nederlandse zomertijd / 01:00 wintertijd).
-- Shop, gear wisselen en verkopen; maximaal vier bags met twaalf plekken per bag.
-- Lokale opslag en offline XP/goud, maximaal acht uur per afwezigheid, expliciet te claimen. Offline beloningen tellen niet voor kills, loot of bazen.
+The game also includes three zones, nine ordinary enemy definitions, three bosses, a main story, three daily quests, ten-encounter runs with blessing choices, four purchasable bags, a shop and offline XP/gold. Dailies reset at **00:00 UTC**. Offline rewards accrue at one ordinary enemy reward per 30 seconds, capped at eight hours per absence; they do not award loot, boss wins or quest kills.
 
-Het is een eerste basis: classes hebben nog geen eigen skills, er is geen multiplayer, cloudsave, geluid, talentboom of Play Store-publicatie. Klok en saves zijn lokaal en niet tegen manipulatie beveiligd.
+## Updating from 0.2.0
 
-## Ontwikkelen
+Install the new APK **over the existing app**. The package remains `com.leonidas.idlerpgv3`, versionCode is now `2`, and the tested builds use the same signing certificate. The original save key is retained and schema 2 migrates to schema 3. Back up any important device data before removing the app: uninstalling deletes local progress. Saves do not sync across devices and the local clock is not cheat-proof.
 
-Node.js 24, JDK 21 en Android SDK met de door Gradle gevraagde platform/build-tools/NDK-versies.
+The prototype still uses a test signing key. Use a fixed private release key before public distribution or Play Store updates; do not commit private keys.
+
+## Development and builds
+
+Requires Node.js 24. Native builds also need JDK 21 and an Android SDK with platform 36, build tools 36.0.0, NDK 27.1.12297006 and CMake 3.22.1.
 
 ```sh
 npm ci
@@ -36,36 +39,40 @@ npm test
 npm start
 ```
 
-Zelf een standalone test-APK bouwen:
+Build a standalone APK for ARM64 phones and x86_64 emulators:
 
 ```sh
-# Configureer JAVA_HOME en ANDROID_HOME voor jouw computer.
+# Set JAVA_HOME and ANDROID_HOME for your machine first.
 npm run apk
 ```
 
-Het script genereert de native Android-map en bouwt voor ARM64-telefoons en x86_64-emulators. Output: `artifacts/idleRPGLeonidasv3-0.2.0.apk`, inclusief SHA-256-controlebestand. `android/`, caches, sleutels en buildoutputs staan buiten Git. APK's worden als releasebestand en als Actions-artifact gedeeld.
+Output: `artifacts/idleRPGLeonidasv3-0.3.0.apk` and its `.sha256` file. The script refreshes generated native configuration before building. Generated native folders, caches, keys and build outputs are ignored by Git. Lockfile dependencies are committed.
 
-Op GitHub draait **Android test APK** na een push naar `main` of via **Actions → Run workflow**. De workflow controleert TypeScript, gameplay en browserbediening voordat hij de APK bouwt. Met **Publish Android alpha → Run workflow** kun je daarna de run-ID van een geslaagde APK-build opgeven om die APK met checksum en changelog als prerelease te publiceren. Deze publicatiestap wacht op een lopende build en gebruikt de exacte geteste commit.
-
-Browsercontroles uitvoeren (web is alleen een testhulpmiddel; Android is het distributiedoel):
+Browser checks use real WebGL rendering, not a mocked scene:
 
 ```sh
 npx playwright install chromium
 npm run test:ui
-# Of gebruik een al geïnstalleerde Chromium via CHROMIUM_PATH.
+# CHROMIUM_PATH can select an existing Chromium installation.
 ```
 
-## Eenvoudig uitbreiden
+**GitHub Actions → Android test APK** runs TypeScript, gameplay and WebGL/browser checks, builds the APK and runs an installed-APK smoke test in an Android emulator. **Publish Android alpha** takes the successful build's run ID and publishes that exact commit's APK, checksum and changelog. It waits for the entire source workflow, including the emulator job, to succeed.
 
-| Bestand | Wat pas je aan? |
+## Extend the game
+
+| File | Purpose |
 | --- | --- |
-| `src/config.ts` | Shop, dailies, offline rewards en roguelike-module aan/uit; balansregels |
-| `src/content/zones.ts` | Levels, vijanden, bazen, beloningen en verhaal |
-| `src/content/gear.ts` | Gearslots en shopitems |
-| `src/content/quests.ts` | Daily quests en tijdelijke zegens |
-| `src/content.ts` | Classes en gezamenlijke contentexports |
-| `src/engine.ts` | Gameplayregels, savevalidatie en pure statetransities |
-| `src/components/BattleScene.tsx` | Visuele gevechtsscène en animaties |
-| `App.tsx` | Schermen, bediening, opslag en applevenscyclus |
+| `src/content/classes.ts` | Classes, weapon styles and data-driven ability kits |
+| `src/content/zones.ts` | Zones, enemies, bosses, rewards and main story |
+| `src/content/gear.ts` | Slots, shop gear, rarity colors and loot rarity distribution |
+| `src/content/quests.ts` | Daily objectives and temporary blessings |
+| `src/config.ts` | Module switches and economy/run/offline rules |
+| `src/appearance.ts` | Appearance choices and validation |
+| `src/engine.ts` | Pure gameplay transitions, combat, abilities and save migration |
+| `src/visuals/` | Original 3D models, scene lighting, rigs and battle effects |
+| `src/components/ThreeStage*` | Native Expo GL and browser WebGL canvas adapters |
+| `src/audio/`, `assets/audio/` | Audio lifecycle and bundled original sounds |
 
-Zie [uitbreidhandleiding](docs/EXTENDING.md), [changelog](CHANGELOG.md) en [updatelog](UPDATELOG.md). Bronvermeldingen voor iconen staan in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md).
+See [EXTENDING.md](docs/EXTENDING.md) and the [class guide](docs/CLASSES.md). Asset provenance is documented in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md).
+
+This is a compact first 3D release: procedural models and rig transforms are deliberately simple. It does not yet include imported skeletal animation sets, character creation morph sliders, class talent trees, multiplayer or cloud saves. Physical device testing remains useful even after browser and emulator checks.

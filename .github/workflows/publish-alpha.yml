@@ -48,14 +48,14 @@ jobs:
           version=$(node -p "require('./package.json').version")
           [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
           {
-            printf '# Leonidas V3 %s — Android test-alpha\n\n' "$version"
-            printf 'Download de APK hieronder op een Android 7.0+ ARM64-telefoon. Geen Expo Go of ontwikkelserver nodig. Testsignatuur; nog geen test op een fysiek toestel.\n\n'
-            printf 'Gebouwd na geslaagde TypeScript-, gameplay- en Playwright-controles in GitHub Actions.\n\n'
+            printf '# Leonidas V3 %s — Android test alpha\n\n' "$version"
+            printf 'Download the APK below on an Android 7.0+ ARM64 device with OpenGL ES 3 support. No Expo Go or development server needed. Test signature; install over the existing app to preserve your local save.\n\n'
+            printf 'Built after successful TypeScript, gameplay, real WebGL/Playwright and installed-APK Android emulator checks in GitHub Actions. Physical device feedback is welcome.\n\n'
             printf 'Build: https://github.com/%s/actions/runs/%s\n\n' "$GH_REPO" "$SOURCE_RUN"
             printf '## SHA-256\n\n```\n'
             cat artifacts/*.sha256
             printf '```\n\n'
             cat CHANGELOG.md
-            printf '\n[Updatelog](https://github.com/%s/blob/main/UPDATELOG.md) · [Uitbreidhandleiding](https://github.com/%s/blob/main/docs/EXTENDING.md)\n' "$GH_REPO" "$GH_REPO"
+            printf '\n[Update log](https://github.com/%s/blob/main/UPDATELOG.md) · [Extension guide](https://github.com/%s/blob/main/docs/EXTENDING.md)\n' "$GH_REPO" "$GH_REPO"
           } > release-notes.md
-          gh release create "v$version" artifacts/*.apk artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android-alpha" --notes-file release-notes.md --prerelease
+          gh release create "v$version" artifacts/*.apk artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android alpha" --notes-file release-notes.md --prerelease

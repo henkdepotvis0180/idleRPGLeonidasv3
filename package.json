@@ -1,6 +1,6 @@
 {
   "name": "idle-rpg-leonidas-v3",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -16,7 +16,11 @@
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",
     "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-three/fiber": "^9.8.1",
     "expo": "~57.0.27",
+    "expo-asset": "~57.0.19",
+    "expo-audio": "~57.0.5",
+    "expo-gl": "~57.0.2",
     "expo-status-bar": "~57.0.1",
     "expo-system-ui": "~57.0.4",
     "react": "19.2.3",
@@ -24,12 +28,15 @@
     "react-native": "0.86.3",
     "react-native-safe-area-context": "~5.7.0",
     "react-native-svg": "15.15.4",
-    "react-native-web": "^0.21.2"
+    "react-native-web": "^0.21.2",
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@types/node": "^24.19.2",
     "@types/react": "~19.2.2",
+    "@types/three": "^0.186.0",
     "playwright": "^1.62.1",
+    "pngjs": "^7.0.0",
     "typescript": "~6.0.3"
   }
 }

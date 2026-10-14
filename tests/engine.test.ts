@@ -24,7 +24,7 @@ test("combat rewards a kill, advances waves, and records boss completion", () =>
   assert.equal(s.kills, 1);
   assert.equal(s.wave, 1);
   assert.deepEqual(s.bosses, ["woods"]);
-  assert.equal(s.gold, 40);
+  assert.equal(s.gold, 16);
   assert.equal(s.daily.kills, 1);
 });
 test("equipping swaps gear without losing items and changes stats", () => {
@@ -33,12 +33,12 @@ test("equipping swaps gear without losing items and changes stats", () => {
   s = buy(s, "shop-sword", 1);
   const id = s.inventory[0].id;
   s = equip(s, id);
-  assert.equal(stats(s).attack, 20);
+  assert.equal(stats(s).attack, 17);
   assert.equal(s.inventory.length, 0);
   s = buy(s, "shop-sword", 2);
   s = equip(s, s.inventory[0].id);
   assert.equal(s.inventory.length, 1);
-  assert.equal(stats(s).attack, 20);
+  assert.equal(stats(s).attack, 17);
 });
 test("shop enforces affordability and bag capacity", () => {
   let s = createState();
@@ -139,7 +139,7 @@ test("blessings pause combat, stack temporary stats, and reset after a boss", as
   assert.equal(paused.enemyHp, s.enemyHp);
   assert.equal(paused.kills, s.kills);
   s = chooseBlessing(s, "sun");
-  assert.equal(stats(s).attack, 18);
+  assert.equal(stats(s).attack, 16);
   assert.equal(chooseBlessing(s, "sun"), s);
   s.wave = 10;
   s.enemyHp = 1;
@@ -167,16 +167,16 @@ test("death and retreat reset temporary bonuses but preserve permanent progress"
   assert.equal(n.run.number, s.run.number + 1);
   assert.deepEqual(n.gear, s.gear);
 });
-test("armor reduces damage with a one damage minimum; replacing HP gear clamps health", () => {
+test("armor has diminishing returns and a 60% mitigation cap; replacing HP gear clamps health", () => {
   let s = createState();
   s.gold = 1000;
   s = buy(s, "shop-helm");
   s = equip(s, s.inventory[0].id);
   s.hp = stats(s).hp;
   const n = tick(s, Date.now(), 1);
-  assert.equal(s.hp - n.hp, 2);
+  assert.equal(s.hp - n.hp, 5);
   s.gear.helmet = { ...s.gear.helmet!, armor: 100 };
-  assert.equal(s.hp - tick(s, Date.now(), 1).hp, 1);
+  assert.equal(s.hp - tick(s, Date.now(), 1).hp, 2);
   s.inventory = [{ ...s.gear.helmet!, id: "replacement", hp: 0 }];
   s = equip(s, "replacement");
   assert.equal(s.hp, stats(s).hp);
@@ -269,4 +269,185 @@ test("optional gameplay modules can be disabled independently", async () => {
   } finally {
     Object.assign(MODULES, enabled);
   }
+});
+
+test("every one of 14 classes has two usable, class-specific abilities", async () => {
+  const { CLASSES } = await import("../src/content.ts");
+  const { castAbility } = await import("../src/engine.ts");
+  assert.equal(CLASSES.length, 14);
+  const ids = new Set<string>();
+  for (const c of CLASSES) {
+    assert.equal(c.abilities.length, 2);
+    for (const a of c.abilities) {
+      assert.ok(!ids.has(a.id));
+      ids.add(a.id);
+      let s = createState(c.id);
+      s.hp = Math.floor(s.hp / 2);
+      s.enemyHp = 1000;
+      const n = castAbility(s, a.id, 1000, 1);
+      assert.equal(n.combat.cooldowns[a.id], a.cooldown);
+      assert.equal(n.combat.event, s.combat.event + 1);
+      assert.equal(castAbility(n, a.id), n);
+      assert.ok(n.enemyHp < s.enemyHp || n.hp > s.hp || n.combat.shield > 0);
+      assert.equal(s.enemyHp, 1000);
+    }
+  }
+  assert.equal(ids.size, 28);
+});
+test("spell kills award loot and quest progress once, including bosses", async () => {
+  const { castAbility } = await import("../src/engine.ts");
+  let s = createState("mage");
+  s.wave = 10;
+  s.enemyHp = 1;
+  const n = castAbility(s, "ember-lance", 1000, 0.7);
+  assert.equal(n.kills, 1);
+  assert.equal(n.daily.bosses, 1);
+  assert.equal(n.wave, 1);
+  assert.equal(n.lastBoss!.gold, 16);
+  assert.equal(n.inventory[0].rarity, "uncommon");
+  assert.equal(castAbility(n, "not-a-real-spell"), n);
+  assert.ok(n.hp > 0);
+});
+test("damage over time belongs to its enemy and does not leak into the next encounter", async () => {
+  const { castAbility } = await import("../src/engine.ts");
+  let s = createState("rogue");
+  s.enemyHp = 1000;
+  s = castAbility(s, "venom-edge", 1000, 1);
+  const before = s.enemyHp;
+  let n = tick(s, 2000, 1);
+  assert.ok(before - n.enemyHp > stats(s).attack);
+  assert.equal(n.combat.dotTurns, 3);
+  n.enemyHp = 1;
+  n = tick(n, 3000, 1);
+  assert.equal(n.combat.dotTurns, 0);
+  assert.equal(n.combat.dot, 0);
+});
+test("healing is capped, barriers absorb damage and interrupt prevents one retaliation", async () => {
+  const { castAbility } = await import("../src/engine.ts");
+  let s = createState("cleric");
+  assert.equal(castAbility(s, "renewal").hp, stats(s).hp);
+  s = createState("warrior");
+  s.enemyHp = 1000;
+  s = castAbility(s, "iron-wall");
+  const hp = s.hp;
+  s = tick(s, Date.now(), 1);
+  assert.equal(s.hp, hp);
+  assert.ok(s.combat.shield > 0);
+  s = createState("warrior");
+  s.enemyHp = 1000;
+  s = castAbility(s, "shield-bash");
+  const old = s.hp;
+  s = tick(s, Date.now(), 1);
+  assert.equal(s.hp, old);
+  s = tick(s, Date.now(), 1);
+  assert.ok(s.hp < old);
+});
+test("shapeshifter forms expire, survive save/load, and clear after a new run", async () => {
+  const { castAbility, abandonRun } = await import("../src/engine.ts");
+  let s = createState("shapeshifter");
+  s.enemyHp = 10000;
+  s = castAbility(s, "bear-form");
+  assert.equal(s.combat.form, "bear");
+  assert.equal(decodeSave(JSON.stringify(s), s.lastSeen).combat.form, "bear");
+  for (let i = 0; i < 6; i++) s = tick(s, Date.now(), 1);
+  assert.equal(s.combat.form, "human");
+  s = castAbility(s, "feral-pounce");
+  assert.equal(s.combat.form, "wolf");
+  assert.equal(abandonRun(s).combat.form, "human");
+});
+test("cooldowns and blessings prevent repeated casting; auto skills are optional", async () => {
+  const { castAbility, setSetting } = await import("../src/engine.ts");
+  let s = createState("mage");
+  s.enemyHp = 1000;
+  s = castAbility(s, "ember-lance");
+  for (let i = 0; i < 8; i++) s = tick(s, Date.now(), 1);
+  assert.equal(s.combat.cooldowns["ember-lance"], 0);
+  assert.ok(castAbility(s, "ember-lance").enemyHp < s.enemyHp);
+  s.run.choicePending = true;
+  assert.equal(castAbility(s, "frost-nova"), s);
+  s = createState("mage");
+  s.enemyHp = 1000;
+  const normal = tick(s, Date.now(), 1);
+  const auto = tick(setSetting(s, "autoCast", true), Date.now(), 1);
+  assert.ok(auto.enemyHp < normal.enemyHp);
+});
+test("0.2.0 saves migrate without losing class, quests, gear, currencies or progress", async () => {
+  const now = Date.now();
+  let s: any = createState("bard", now);
+  s.gold = 480;
+  s.level = 7;
+  s.bosses = ["woods"];
+  s.mainClaimed = 1;
+  s = buy(s, "shop-helm");
+  s = equip(s, s.inventory[0].id);
+  s.daily.kills = 12;
+  s.version = 2;
+  delete s.appearance;
+  delete s.settings;
+  delete s.combat;
+  delete s.lastBoss;
+  s.gear.helmet.name = "Helm van de dageraad";
+  const n = decodeSave(JSON.stringify(s), now);
+  assert.equal(n.version, 3);
+  assert.equal(n.classId, "bard");
+  assert.equal(n.gold, 380);
+  assert.equal(n.level, 7);
+  assert.equal(n.mainClaimed, 1);
+  assert.deepEqual(n.bosses, ["woods"]);
+  assert.equal(n.daily.kills, 12);
+  assert.equal(n.gear.helmet!.id, s.gear.helmet.id);
+  assert.equal(n.gear.helmet!.name, "Dawnwatch Helm");
+  assert.equal(n.appearance.style, 1);
+});
+test("appearance and class hall preserve permanent items and reset only run combat", async () => {
+  const { customize, switchClass, castAbility } =
+    await import("../src/engine.ts");
+  let s = createState("warrior");
+  s.gold = 1000;
+  s = buy(s, "shop-sword");
+  s = equip(s, s.inventory[0].id);
+  s = customize(s, "hair", 3);
+  s = castAbility(s, "iron-wall");
+  const n = switchClass(s, "ranger");
+  assert.equal(n.level, s.level);
+  assert.equal(n.gold, s.gold);
+  assert.equal(n.gear.weapon!.weaponStyle, "bow");
+  assert.equal(n.appearance.hair, 3);
+  assert.equal(n.combat.shield, 0);
+  assert.equal(customize(n, "skin", 99), n);
+  assert.equal(switchClass(n, "missing"), n);
+});
+test("rarity tiers have monotonic power and boss loot is not guaranteed epic", async () => {
+  const { RARITIES, rollRarity } = await import("../src/content.ts");
+  assert.equal(Object.keys(RARITIES).length, 5);
+  assert.ok(RARITIES.legendary.multiplier > RARITIES.epic.multiplier);
+  assert.equal(rollRarity(0.9, true), "uncommon");
+  assert.equal(rollRarity(0.3, true), "rare");
+  assert.equal(rollRarity(0.03, true), "epic");
+  assert.equal(rollRarity(0.001, true), "legendary");
+});
+test("malformed customization or combat saves cannot enter the runtime", () => {
+  const s = createState();
+  for (const patch of [
+    { appearance: { ...s.appearance, skin: 99 } },
+    { combat: { ...s.combat, cooldowns: { bad: -4 } } },
+    { settings: { music: "yes" } },
+    { lastBoss: { gold: -1 } },
+  ])
+    assert.equal(
+      decodeSave(JSON.stringify({ ...s, gold: 999, ...patch })).gold,
+      0,
+    );
+});
+test("a four-turn barrier protects all four turns, then expires", async () => {
+  const { castAbility } = await import("../src/engine.ts");
+  let s = createState("warrior");
+  s.enemyHp = 10000;
+  s = castAbility(s, "iron-wall");
+  const hp = s.hp;
+  for (let i = 0; i < 4; i++) s = tick(s, Date.now(), 1);
+  assert.equal(s.hp, hp);
+  assert.equal(s.combat.shield, 0);
+  s = tick(s, Date.now(), 1);
+  assert.equal(s.hp, hp - 5);
 });

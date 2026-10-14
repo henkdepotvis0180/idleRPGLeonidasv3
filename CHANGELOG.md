@@ -1,39 +1,41 @@
 # Changelog
 
-## 0.2.0 — 14 oktober 2026
+## 0.3.0 — 14 October 2026
 
-Eerste speelbare alpha in **idleRPGLeonidasv3**, voortbouwend op de eerdere Leonidas-prototypebasis.
+### Characters, combat and presentation
 
-### Gameplay
+- Replace icon-only fights with real 3D chibi heroes, monsters and crowned bosses using Three.js / React Three Fiber / Expo GL.
+- Add an interactive wardrobe with visible equipment, skin tones, hair colors/styles, outfit accents and faces.
+- Add original gear icons for all sixteen slots and five rarity colors: common, uncommon, rare, epic and legendary.
+- Add weapon rigs for swords, daggers, staves, bows, hammers, axes, fists, lutes, wands and scythes.
+- Add swings, shield movement, lunges, hits, spell projectiles, floating damage and wolf/bear forms.
+- Add original launcher artwork, ambient music, hit/spell sounds and a boss victory chime, with separate music/effects controls.
+- Suspend 3D scenes and audio when backgrounded; add a low graphics switch.
 
-- Vier speelbare classes met verschillende beginstats.
-- Drie gebieden met negen gewone vijanddefinities en drie eindbazen.
-- Drie hoofdverhaalquests en drie afzonderlijk te claimen daily quests.
-- Roguelike runs van tien encounters met tijdelijke zegenkeuzes op drie rustpunten.
-- Goud, XP, levels, offline XP/goud en lokale voortgang.
-- Gegarandeerde epic eindbaasloot wanneer er bagruimte is.
+### Fourteen classes, twenty-eight abilities
 
-### Gear en presentatie
+- Retain Warrior, Mage, Rogue and Bard; add Paladin, Ranger, Cleric, Warlock, Monk, Shaman, Berserker, Artificer, Shapeshifter and Necromancer.
+- Give each class two distinct active abilities with cooldowns and optional auto-casting.
+- Implement direct damage, damage-over-time, healing, temporary barriers, interrupts and transformations through a shared reward-safe combat path.
+- Add a class hall to try classes without deleting permanent progress.
 
-- Zestien gearslots, inclusief offhand, twee ringen en twee trinkets.
-- Armor verlaagt inkomende schade; HP en aanval schalen met gear en levels.
-- Shop, verkopen, gear wisselen en maximaal vier bags.
-- Bewegende achtergrond, aanvalslunges, hitreacties en zwevende schadecijfers.
-- Android safe-area-ondersteuning en schermen op telefoonformaat.
+### Balance and saves
 
-### Uitbreidbaarheid en onderhoud
+- Reduce boss XP/gold from 5× to 2× ordinary rewards and story rewards to 50 XP per chapter plus 60 gold.
+- Replace guaranteed epic boss drops with 50% uncommon, 40% rare, 9% epic and 1% legendary loot when bag space is available.
+- Reduce new gear/blessing bonuses; use diminishing armor returns capped at 60% mitigation.
+- Slow new offline accrual to one ordinary reward per 30 seconds, still capped at eight hours per absence.
+- Keep boss reward summaries visible until dismissed.
+- Migrate existing 0.2.0 saves to schema 3 without removing class, level, currencies, gear, inventory, quest or boss progress.
+- Keep the same package/storage key and increment Android versionCode to 2.
 
-- Losse bestanden voor gebieden/vijanden/bazen, gear en quests/zegens.
-- Schakelbare shop-, daily-, offline- en roguelike-modules via `src/config.ts`.
-- Automatische wereldkaart en hoofdquests op basis van gebiedsdata.
-- Baasregistratie met stabiele gebied-ID's.
-- Pure gameplay-engine met savevalidatie en 18 geautomatiseerde tests.
-- Reproduceerbare browserchecks en een GitHub Actions-workflow voor checks en test-APK's.
-- APK-buildscript met SHA-256-checksum; Nederlandse README en uitbreidhandleiding.
+### Language and development
 
-### Grenzen van deze alpha
+- Switch all current game text, content, documentation and release notes to English.
+- Separate class kits, appearance palettes, 3D world/models, canvas adapters, audio lifecycle and UI panels into modules.
+- Add coverage for all ability kits, spell kills, effects, cooldowns, transformations, rarity, customization and schema-2 migration.
+- Add real WebGL browser checks and an installed-APK Android emulator smoke workflow.
 
-- Alleen lokale saves; geen cloudsync, multiplayer of anti-cheat.
-- Classvaardigheden, geluid, talents en uitgebreide spriteanimaties volgen later.
-- Testsignatuur; nog geen vaste distributiesleutel of Play Store-release.
-- Cloudbrowsercontroles vervangen geen test op een echte Android-telefoon.
+## 0.2.0 — 14 October 2026
+
+First playable V3 Android alpha: four classes, three zones with bosses/story chapters, three daily quests, sixteen equipment slots, armor, bags/shop, automatic combat, scrolling icon-based scenes, ten-encounter roguelike runs, local saves and offline rewards. Includes data-driven content, module toggles, eighteen gameplay tests, browser checks, APK/checksum builds and GitHub release publishing.
