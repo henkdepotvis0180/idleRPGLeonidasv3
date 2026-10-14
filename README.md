@@ -2,7 +2,7 @@
 
 An English-language idle roguelike RPG for Android, with a playable 3D frontier, original fantasy story and modular content. Built with React Native, Expo, Three.js and React Three Fiber.
 
-**[Download release 0.4.0: APK + source ZIP](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0)** · [Changelog](CHANGELOG.md) · [Update log](UPDATELOG.md) · [Playing guide](docs/PLAYING.md)
+**[Download release 0.4.0: APK + source ZIP](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0-r4)** · [Changelog](CHANGELOG.md) · [Update log](UPDATELOG.md) · [Playing guide](docs/PLAYING.md)
 
 The standalone APK includes the game, models, textures and audio. No account, Expo Go or development server is needed. Android 7.0+, ARM64 and OpenGL ES 3-capable hardware are recommended. This remains a test alpha, using lightweight procedural 3D models; the realistic launcher illustration is promotional artwork.
 
@@ -25,7 +25,7 @@ The game takes broad genre inspiration from fantasy RPGs, with original names, a
 
 ## Install or update
 
-Download `idleRPGLeonidasv3-0.4.0.apk` from the release and install it over the existing Leonidas V3 app. The package remains `com.leonidas.idlerpgv3`, Android versionCode is `3`, and the original storage key remains in use. Uninstalling removes local progress; saves do not sync across devices.
+Download `idleRPGLeonidasv3-0.4.0.apk` from the release and install it over the existing Leonidas V3 app. The package remains `com.leonidas.idlerpgv3`, Android versionCode is `4`, and the original storage key remains in use. Uninstalling removes local progress; saves do not sync across devices.
 
 The app uses a test signing key for these alpha updates. A fixed private release key is needed before public distribution. Signing keys and credentials must never enter the source archive.
 

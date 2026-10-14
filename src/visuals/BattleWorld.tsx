@@ -11,7 +11,7 @@ import {
   type State,
   bossWarning,
 } from "../engine";
-import { BIOMES, ZONES, classFor } from "../content";
+import { BIOMES, ZONES, RACES, classFor } from "../content";
 const EFFECTS = {
   steel: "#e7d7ac",
   fire: "#ff9b61",
@@ -164,14 +164,17 @@ function CameraRig({ state, preview }: { state: State; preview: boolean }) {
   });
   return null;
 }
-export function BattleWorld({
+export type ScreenAnchors = Record<"hero" | "enemy", { x: number; y: number }>;
+function WorldScene({
   state,
   preview = false,
   running = true,
+  onAnchors,
 }: {
   state: State;
   preview?: boolean;
   running?: boolean;
+  onAnchors?: (anchors: ScreenAnchors) => void;
 }) {
   const hero = useRef<THREE.Group>(null),
     foe = useRef<THREE.Group>(null),
@@ -187,6 +190,10 @@ export function BattleWorld({
     walking = useRef(0),
     heroTarget = useRef(new THREE.Vector3()),
     friendTarget = useRef(new THREE.Vector3());
+  const camera = useThree((s) => s.camera);
+  const projectionTime = useRef(0.2),
+    heroProbe = useRef(new THREE.Vector3()),
+    enemyProbe = useRef(new THREE.Vector3());
   const biome = BIOMES[state.zone % BIOMES.length],
     roam = state.world.mode === "explore";
   const nodes = useMemo(
@@ -245,6 +252,47 @@ export function BattleWorld({
     if (foe.current) {
       foe.current.position.set(bx, 0, bz - 2.1 + enemyAttack.current * 0.25);
       foe.current.rotation.z = attack.current * 0.025;
+    }
+    projectionTime.current += delta;
+    if (
+      !preview &&
+      !roam &&
+      onAnchors &&
+      hero.current &&
+      foe.current &&
+      projectionTime.current >= 0.2
+    ) {
+      projectionTime.current = 0;
+      camera.updateMatrixWorld();
+      const enemy = currentEnemy(state);
+      const raceScale = RACES.find((r) => r.id === state.race)?.scale[1] ?? 1;
+      hero.current.getWorldPosition(heroProbe.current);
+      heroProbe.current.y +=
+        state.combat.form === "human" ? 1.8 * raceScale : 1.3;
+      foe.current.getWorldPosition(enemyProbe.current);
+      enemyProbe.current.y +=
+        enemy.art === "boss"
+          ? 2.8
+          : enemy.art === "dragon"
+            ? 2.5
+            : enemy.art === "golem"
+              ? enemy.mechanic
+                ? 3.2
+                : 2.2
+              : enemy.art === "soldier"
+                ? 2.1
+                : 1.4;
+      const screen = (point: THREE.Vector3) => {
+        point.project(camera);
+        return {
+          x: THREE.MathUtils.clamp((point.x + 1) / 2, 0.08, 0.86),
+          y: THREE.MathUtils.clamp((1 - point.y) / 2, 0.2, 0.84),
+        };
+      };
+      onAnchors({
+        hero: screen(heroProbe.current),
+        enemy: screen(enemyProbe.current),
+      });
     }
     if (spell.current) {
       spell.current.visible = !preview && !roam && ranged && p < 0.9;
@@ -428,3 +476,5 @@ export function BattleWorld({
     </>
   );
 }
+
+export const BattleWorld = React.memo(WorldScene);

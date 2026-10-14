@@ -59,4 +59,7 @@ jobs:
             cat CHANGELOG.md
             printf '\n[Update log](https://github.com/%s/blob/main/UPDATELOG.md) · [Extension guide](https://github.com/%s/blob/main/docs/EXTENDING.md)\n' "$GH_REPO" "$GH_REPO"
           } > release-notes.md
-          gh release create "v$version" artifacts/*.apk artifacts/*.zip artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android alpha" --notes-file release-notes.md --prerelease
+          tag="v$version"
+          build=$(node -p "require('./app.json').expo.android.versionCode")
+          if gh release view "$tag" >/dev/null 2>&1; then tag="$tag-r$build"; fi
+          gh release create "$tag" artifacts/*.apk artifacts/*.zip artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version (build $build) — Android alpha" --notes-file release-notes.md --prerelease

@@ -1,7 +1,14 @@
-import React, { Component, useEffect, useRef, type ReactNode } from "react";
+import React, {
+  Component,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 import { Animated, StyleSheet, Text, View } from "react-native";
 import { ThreeStage } from "./ThreeStage";
-import { BattleWorld } from "../visuals/BattleWorld";
+import { BattleWorld, type ScreenAnchors } from "../visuals/BattleWorld";
 import { type State, currentEnemy } from "../engine";
 import { classFor } from "../content";
 import { DamageNumbers } from "./DamageNumbers";
@@ -41,6 +48,21 @@ export function BattleScene({
   expanded?: boolean;
   rendering?: boolean;
 }) {
+  const [anchors, setAnchors] = useState<ScreenAnchors>({
+    hero: { x: 0.3, y: 0.58 },
+    enemy: { x: 0.65, y: 0.4 },
+  });
+  const placeNumbers = useCallback((next: ScreenAnchors) => {
+    setAnchors((previous) =>
+      Math.abs(previous.hero.x - next.hero.x) +
+        Math.abs(previous.hero.y - next.hero.y) +
+        Math.abs(previous.enemy.x - next.enemy.x) +
+        Math.abs(previous.enemy.y - next.enemy.y) <
+      0.004
+        ? previous
+        : next,
+    );
+  }, []);
   return (
     <View
       pointerEvents="none"
@@ -59,7 +81,12 @@ export function BattleScene({
       {active ? (
         <SceneBoundary>
           <ThreeStage lowPower={state.settings.lowPower} rendering={rendering}>
-            <BattleWorld state={state} running={running} preview={preview} />
+            <BattleWorld
+              state={state}
+              running={running}
+              preview={preview}
+              onAnchors={placeNumbers}
+            />
           </ThreeStage>
         </SceneBoundary>
       ) : (
@@ -83,7 +110,7 @@ export function BattleScene({
           <Text style={styles.name}>{currentEnemy(state).name}</Text>
         </View>
       )}
-      {!preview && <DamageNumbers state={state} />}
+      {!preview && <DamageNumbers state={state} anchors={anchors} />}
       {!preview && !expanded && (!running || state.run.choicePending) && (
         <Text pointerEvents="none" style={styles.paused}>
           {state.run.choicePending

@@ -1,15 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Animated, StyleSheet, View } from "react-native";
+import type { ScreenAnchors } from "../visuals/BattleWorld";
 import type { State } from "../engine";
 type Hit = State["floats"][number];
 function Burst({
   hit,
   index,
-  third,
+  anchor,
 }: {
   hit: Hit;
   index: number;
-  third: boolean;
+  anchor: ScreenAnchors["hero"];
 }) {
   const rise = useRef(new Animated.Value(0)).current,
     opacity = useRef(new Animated.Value(0)).current,
@@ -77,22 +78,16 @@ function Burst({
             : `${hit.amount}`;
   return (
     <Animated.View
+      accessibilityLabel={`Damage to ${hit.target}: ${hit.amount}`}
       style={[
         styles.burst,
         {
-          left:
-            hit.target === "enemy"
-              ? third
-                ? "43%"
-                : "42%"
-              : third
-                ? "30%"
-                : "57%",
-          top: hit.target === "enemy" ? "35%" : "57%",
+          left: `${anchor.x * 100}%`,
+          top: `${anchor.y * 100}%`,
           opacity,
           transform: [
             { translateY: rise },
-            { translateX: ((index % 3) - 1) * 24 },
+            { translateX: -30 + ((index % 3) - 1) * 18 },
             { scale },
           ],
         },
@@ -114,7 +109,13 @@ function Burst({
     </Animated.View>
   );
 }
-export function DamageNumbers({ state }: { state: State }) {
+export function DamageNumbers({
+  state,
+  anchors,
+}: {
+  state: State;
+  anchors: ScreenAnchors;
+}) {
   const seen = useRef(state.floatSerial),
     [hits, setHits] = useState<Hit[]>([]),
     timeouts = useRef<ReturnType<typeof setTimeout>[]>([]);
@@ -134,12 +135,7 @@ export function DamageNumbers({ state }: { state: State }) {
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       {hits.map((h, i) => (
-        <Burst
-          key={h.id}
-          hit={h}
-          index={i}
-          third={state.world.camera === "third"}
-        />
+        <Burst key={h.id} hit={h} index={i} anchor={anchors[h.target]} />
       ))}
     </View>
   );

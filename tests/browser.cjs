@@ -311,6 +311,66 @@ const path = require("node:path");
       "PASS: all eight boss models and offensive spell buttons/cooldowns render and work",
     );
 
+    // Damage labels must follow the actual actors through the 3D camera.
+    const damageState = engine.createState("mage");
+    damageState.level = 28;
+    damageState.zone = 7;
+    damageState.wave = 10;
+    damageState.enemyHp = engine.enemyMax(damageState);
+    damageState.hp = engine.stats(damageState).hp;
+    damageState.settings.effects = false;
+    page = await open(damageState);
+    await page
+      .getByRole("button", { name: "Pause expedition", exact: true })
+      .click();
+    await webgl(page);
+    const damagePositions = async () => {
+      await page
+        .getByRole("button", { name: "Resume expedition", exact: true })
+        .click();
+      await page.waitForTimeout(1400);
+      await page
+        .getByRole("button", { name: "Pause expedition", exact: true })
+        .click();
+      const dealt = await page
+        .getByLabel(/^Damage to enemy:/)
+        .last()
+        .boundingBox();
+      const received = await page
+        .getByLabel(/^Damage to hero:/)
+        .last()
+        .boundingBox();
+      assert.ok(
+        dealt && received,
+        "Both outgoing and incoming damage must be displayed",
+      );
+      return { dealt, received };
+    };
+    let positions = await damagePositions();
+    assert.ok(
+      positions.dealt.x > positions.received.x + 20,
+      "Overview damage must belong to the enemy on the right and hero on the left",
+    );
+    await page.screenshot({
+      path: "artifacts/screenshots/projected-damage-overview.png",
+    });
+    await page
+      .getByRole("button", { name: "Switch to third person", exact: true })
+      .click();
+    await page.waitForTimeout(1800);
+    positions = await damagePositions();
+    assert.ok(
+      positions.dealt.y < positions.received.y,
+      "Third-person damage must belong to the foe ahead and hero in the foreground",
+    );
+    await page.screenshot({
+      path: "artifacts/screenshots/projected-damage-third.png",
+    });
+    await page.close();
+    console.log(
+      "PASS: incoming/outgoing damage follows the correct 3D actors in overview and third person",
+    );
+
     // Play the new 0.4 frontier, cameras, heritage, factions and companions through actual controls.
     s = engine.createState("ranger");
     s.level = 28;

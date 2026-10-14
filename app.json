@@ -11,7 +11,7 @@
     "userInterfaceStyle": "dark",
     "android": {
       "package": "com.leonidas.idlerpgv3",
-      "versionCode": 3
+      "versionCode": 4
     },
     "assetBundlePatterns": [
       "**/*"

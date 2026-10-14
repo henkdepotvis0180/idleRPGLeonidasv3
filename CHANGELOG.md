@@ -18,7 +18,7 @@
 - Add six permanent companions bought with earned in-game gold. One follows at a time; allies provide damage, armor or timed healing and appear alongside the hero.
 - Add left/centre/right positions and Balanced, Assault and Guard stances with explicit damage/defence tradeoffs.
 - Add lane telegraphs to later bosses. Moving away before impact reduces incoming damage; staying in the marked lane increases it.
-- Show outgoing and incoming damage, critical hits, healing, absorbed damage and dodges as separate animated floating numbers with bounded event history.
+- Show outgoing and incoming damage, critical hits, healing, absorbed damage and dodges as separate animated floating numbers with bounded event history. The revised build projects the actual hero/enemy positions through the 3D camera, keeping the numbers attached to the correct actor in either view.
 
 ### Materials, gear and sound
 
@@ -32,9 +32,11 @@
 ### Compatibility and development
 
 - Retain all fourteen classes and twenty-eight abilities, sixteen slots, dailies, shops, offline rewards and the original save key.
-- Migrate schema-2 and schema-3 saves to schema 4 without losing permanent progress or equipment; keep the Android package/signing identity and increment versionCode to 3.
+- Migrate schema-2 and schema-3 saves to schema 4 without losing permanent progress or equipment; keep the Android package/signing identity and use Android versionCode 4 for the revised build (the initial 0.4.0 build used 3).
 - Extend modular content tables and optional exploration/companion switches; document the atlas, boss mechanics, item generation and sound mapping.
 - Expand gameplay/save tests, real WebGL browser interaction checks and installed-APK Android checks for the new features.
+- Pause drawing behind panels while retaining the native GL context; cap native drawing at 30 FPS (20 in low graphics), with animation timing independent of the gameplay tick.
+- Read the live Android accessibility tree with a temporary emulator-only helper so active idle combat cannot produce stale control coordinates during tests.
 - Include a source ZIP and SHA-256 alongside the standalone APK in the tested GitHub release workflow.
 
 ## 0.3.0 — 14 October 2026

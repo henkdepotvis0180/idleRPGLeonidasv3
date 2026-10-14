@@ -61,6 +61,12 @@ Run `python3 scripts/generate-audio.py` to regenerate the original deterministic
 
 The launcher icon is original generated artwork. Asset provenance and legacy icon licenses are in `assets/ATTRIBUTION.md`.
 
+## Native rendering and UI verification
+
+The native canvas uses an explicit draw scheduler capped at 30 FPS, or 20 in low graphics. Panels pause drawing and keep the GL context alive, avoiding expensive teardown during map/journal transitions. Animation deltas remain separate from one-second combat ticks. Browser scenes use their normal frame loop.
+
+Android checks build a separate temporary headless test APK from `tests/native/`. It reads the live accessibility tree without waiting for an idle screen; animated/automatic games otherwise give stale coordinates. The helper and its generated test key stay in ignored build outputs and are not bundled into the game APK. `Diagnose existing Android APK` can exercise an already-built artifact during diagnosis; release publication still requires the complete source build workflow to succeed.
+
 ## Saves and releases
 
 The app ID and storage key are stable. Version 0.4.0 writes schema 4 and migrates schemas 2 and 3 before validation. Schema 4 adds heritage, factions, company, tactics, world state, combat turns and bounded damage events. Keep the real schema-2 fixture test when changing migration behavior. Unknown or corrupted structures are rejected safely; development builds should not overwrite real device saves unintentionally.

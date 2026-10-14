@@ -6,7 +6,7 @@ A full-height gameplay viewport, playable third-person exploration and a seeded 
 
 The presentation moves away from chibi proportions toward taller articulated figures, fitted equipment and restrained materials. This remains an original lightweight procedural 3D alpha, with compact regional exploration rather than a seamless continent. The launcher image is separate promotional illustration. See [the changelog](CHANGELOG.md), [playing guide](docs/PLAYING.md) and [extension guide](docs/EXTENDING.md).
 
-The package remains `com.leonidas.idlerpgv3`, versionCode is `3`, and schemas 2/3 migrate to schema 4 under the existing save key. Existing class, level, currencies, gear, appearance, quests and boss progress are retained. New saves include heritage, faction, companion ownership, tactics, world location, destination and camera choice.
+The package remains `com.leonidas.idlerpgv3`, versionCode is `4` for the revised build, and schemas 2/3 migrate to schema 4 under the existing save key. Existing class, level, currencies, gear, appearance, quests and boss progress are retained. New saves include heritage, faction, companion ownership, tactics, world location, destination and camera choice.
 
 ### Local validation
 
@@ -14,7 +14,9 @@ The package remains `com.leonidas.idlerpgv3`, versionCode is `3`, and schemas 2/
 - Real WebGL browser checks passed for the large viewport, all classes/bosses/races, third-person movement, camera swaps, atlas navigation/cache collection, companion hiring/switching, faction choice and tactics; 390 × 844 and 320 × 740 layouts are covered.
 - Standalone native Android build succeeded with Hermes, ARM64/x86_64 Expo GL libraries and sixteen bundled WAV assets. Package/version/minimum SDK and APK signature were inspected; the signing certificate matches 0.3.0.
 
-Final GitHub Actions/emulator results and published artifact checksums will be added after release verification.
+The initial build 3 passed its complete workflow and was published at `v0.4.0`. A final screenshot review found that floating numbers used fixed screen positions. Build 4 projects the hero and enemy through the current 3D camera and keeps their numbers on the correct actor in both views. The initial release remains archived; use the revised [0.4.0 build 4](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0-r4) for the corrected presentation.
+
+Final build-4 workflow results and published checksums are recorded after verification.
 
 ## 14 October 2026 — 0.3.0: heroes take shape
 
