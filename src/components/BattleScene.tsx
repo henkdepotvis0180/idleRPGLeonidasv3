@@ -32,12 +32,14 @@ export function BattleScene({
   preview = false,
   active = true,
   expanded = false,
+  rendering = true,
 }: {
   state: State;
   running: boolean;
   preview?: boolean;
   active?: boolean;
   expanded?: boolean;
+  rendering?: boolean;
 }) {
   return (
     <View
@@ -56,7 +58,7 @@ export function BattleScene({
     >
       {active ? (
         <SceneBoundary>
-          <ThreeStage lowPower={state.settings.lowPower}>
+          <ThreeStage lowPower={state.settings.lowPower} rendering={rendering}>
             <BattleWorld state={state} running={running} preview={preview} />
           </ThreeStage>
         </SceneBoundary>

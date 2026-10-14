@@ -118,7 +118,8 @@ export function AdventureScreen({
       <BattleScene
         state={state}
         running={running}
-        active={active && !map && !journal}
+        active={active}
+        rendering={!map && !journal}
         expanded
       />
       <View pointerEvents="box-none" style={StyleSheet.absoluteFill}>
@@ -247,7 +248,7 @@ export function AdventureScreen({
         )}
         {roam && (
           <View style={styles.roamControls}>
-            <MovePad move={move} active={active && !map && !journal} />
+            <MovePad move={move} active={active} rendering={!map && !journal} />
             <View style={{ width: 135, gap: 6 }}>
               <Button
                 label={
