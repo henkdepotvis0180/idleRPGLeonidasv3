@@ -1,6 +1,8 @@
 /** Turn complete gameplay modules on/off here, then rebuild the APK. */
 export const MODULES = {
   shop: true,
+  exploration: true,
+  companions: true,
   dailyQuests: true,
   offlineRewards: true,
   roguelike: true,

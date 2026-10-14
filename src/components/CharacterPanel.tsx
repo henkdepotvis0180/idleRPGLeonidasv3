@@ -1,5 +1,6 @@
 import React from "react";
 import { Pressable, Text, View } from "react-native";
+import { HeritagePanel } from "./CompanyPanel";
 import { BattleScene } from "./BattleScene";
 import { Button, Card, ui } from "./UI";
 import { GearIcon } from "./GearIcon";
@@ -52,6 +53,7 @@ export function CharacterPanel({
         Jewelry adds small gemstone details.
       </Text>
       <BattleScene state={state} running={false} preview active={active} />
+      <HeritagePanel state={state} act={act} />
       <Card>
         <Text style={ui.subheading}>Appearance</Text>
         {swatches("Skin tone", "skin", SKIN_TONES)}
@@ -94,7 +96,7 @@ export function CharacterPanel({
               color={item ? RARITIES[item.rarity].color : undefined}
               style={ui.slot}
             >
-              <GearIcon slot={slot} rarity={item?.rarity} />
+              <GearIcon slot={slot} rarity={item?.rarity} item={item} />
               <Text style={ui.eyebrow}>{SLOT_NAMES[slot]}</Text>
               <Text
                 style={[
@@ -109,6 +111,9 @@ export function CharacterPanel({
                   <Text style={ui.small}>
                     +{item.attack} ATK · +{item.hp} HP · +{item.armor} ARM
                   </Text>
+                  {!!item.description && (
+                    <Text style={ui.small}>{item.description}</Text>
+                  )}
                   <Button
                     label={`Unequip ${SLOT_NAMES[slot]}`}
                     secondary

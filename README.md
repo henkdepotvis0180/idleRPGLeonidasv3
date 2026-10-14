@@ -1,36 +1,39 @@
 # Leonidas V3 — The Shattered Dawn
 
-An English-language idle roguelike RPG for Android, built with React Native, Expo, Three.js and React Three Fiber. Original chibi characters, worlds and effects take broad genre inspiration from fantasy RPGs without using their characters, assets, music or code.
+An English-language idle roguelike RPG for Android, with a playable 3D frontier, original fantasy story and modular content. Built with React Native, Expo, Three.js and React Three Fiber.
 
-**[Download the 0.3.0 Android alpha](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.3.0)** · [Changelog](CHANGELOG.md) · [Update log](UPDATELOG.md)
+**[Download release 0.4.0: APK + source ZIP](https://github.com/henkdepotvis0180/idleRPGLeonidasv3/releases/tag/v0.4.0)** · [Changelog](CHANGELOG.md) · [Update log](UPDATELOG.md) · [Playing guide](docs/PLAYING.md)
 
-Android 7.0+, ARM64 and OpenGL ES 3-capable hardware are recommended. The APK includes the game, models and audio; no Expo Go, development server or account is needed. A graceful graphics error message keeps gameplay available if a device cannot create the 3D context. This is a test alpha, not a Play Store release.
+The standalone APK includes the game, models, textures and audio. No account, Expo Go or development server is needed. Android 7.0+, ARM64 and OpenGL ES 3-capable hardware are recommended. This remains a test alpha, using lightweight procedural 3D models; the realistic launcher illustration is promotional artwork.
 
-## What is new in 0.3.0?
+## Release 0.4.0
 
-- Real 3D battles and a wardrobe: your chibi hero, visible equipped gear, wolves, spirits and distinctive crowned bosses.
-- Fourteen playable classes with **28 active abilities**, cooldowns, optional auto-casting, healing, barriers, interrupts, curses and wolf/bear transformations.
-- Custom skin tone, hairstyle, hair color, outfit accent and face, saved on your device.
-- Sixteen equipment slots, original item icons and white/green/blue/purple/orange rarity borders. Weapons visually adapt to your class.
-- Sword/weapon swings, shield movement, lunges, hits, spell projectiles, floating damage and transformation effects.
-- A new launcher icon and original procedural ambient music, hit/spell sounds and a boss victory chime. Enable music in **Settings**; sound effects have their own switch.
-- Boss XP/gold reduced from 5× to 2×. Boss drops are no longer always epic. Smaller gear/blessing bonuses and diminishing armor mitigation (60% cap) keep progression meaningful.
-- English UI, story, class descriptions, item names, quests, documentation and release notes.
-- Automatic migration of 0.2.0 saves: class, level, currency, inventory, gear, quests and boss progress are retained. Existing equipment stats are preserved; new loot uses the revised balance.
+- A full-height gameplay viewport with overlaid health, spells and tactical controls.
+- Walk around a seeded regional frontier in third person or an aerial view. Switch cameras with a smooth rising/falling transition. The atlas shows destinations and level requirements; pick a site to walk there.
+- Eight regions, 24 ordinary enemy definitions, eight bosses and eight original story chapters, including a plague colossus, bound frost dragon and time-bound sovereign.
+- Six races and two story factions, visible equipment, articulated movement, regional materials, fog, banners and snow/motes.
+- Six permanent companions hired with earned gold: damage, armor or timed healing, with one visible ally following at a time.
+- Three combat lanes, three stances and boss attack telegraphs. Stylish outgoing/incoming damage, critical, healing, block and dodge numbers.
+- Sixteen slots, five rarity colors and 128 regional equipment catalog entries. Loot adds level, material, origin, lore and design; advanced jewelry can provide critical chance/regeneration.
+- Eight distinct spell-school sounds, weapon-specific effects, two original ambient themes and separate music/effects toggles.
+- All fourteen classes and twenty-eight abilities, daily/main quests, ten-encounter blessing runs, bags/shop and offline XP/gold remain available.
+- Schema-2/3 saves automatically migrate to schema 4; previous progress and equipment are preserved.
 
-<img src="docs/preview.png" width="320" alt="Leonidas 0.3.0 native Android emulator battle capture"> <img src="docs/wardrobe.png" width="320" alt="Customizable 3D hero with equipped gear">
+<img src="docs/preview.png" width="320" alt="Leonidas native Android gameplay"> <img src="docs/wardrobe.png" width="320" alt="Playable procedural hero and visible equipment">
 
-The game also includes three zones, nine ordinary enemy definitions, three bosses, a main story, three daily quests, ten-encounter runs with blessing choices, four purchasable bags, a shop and offline XP/gold. Dailies reset at **00:00 UTC**. Offline rewards accrue at one ordinary enemy reward per 30 seconds, capped at eight hours per absence; they do not award loot, boss wins or quest kills.
+The game takes broad genre inspiration from fantasy RPGs, with original names, artwork, geometry, maps, item descriptions, stories and synthesized music. The frontier is a regional open-world prototype: selectable regions contain compact walkable generated layouts, rather than a seamless continent or multiplayer world.
 
-## Updating from 0.2.0
+## Install or update
 
-Install the new APK **over the existing app**. The package remains `com.leonidas.idlerpgv3`, versionCode is now `2`, and the tested builds use the same signing certificate. The original save key is retained and schema 2 migrates to schema 3. Back up any important device data before removing the app: uninstalling deletes local progress. Saves do not sync across devices and the local clock is not cheat-proof.
+Download `idleRPGLeonidasv3-0.4.0.apk` from the release and install it over the existing Leonidas V3 app. The package remains `com.leonidas.idlerpgv3`, Android versionCode is `3`, and the original storage key remains in use. Uninstalling removes local progress; saves do not sync across devices.
 
-The prototype still uses a test signing key. Use a fixed private release key before public distribution or Play Store updates; do not commit private keys.
+The app uses a test signing key for these alpha updates. A fixed private release key is needed before public distribution. Signing keys and credentials must never enter the source archive.
 
 ## Development and builds
 
-Requires Node.js 24. Native builds also need JDK 21 and an Android SDK with platform 36, build tools 36.0.0, NDK 27.1.12297006 and CMake 3.22.1.
+Download the release's `idleRPGLeonidasv3-0.4.0-source.zip`, or clone the repository. The ZIP contains committed source, the dependency lockfile, documentation and build scripts; it excludes generated native folders, caches and build artifacts.
+
+Requires Node.js 24. Native builds also need JDK 21 and Android SDK platform 36, build tools 36.0.0, NDK 27.1.12297006 and CMake 3.22.1.
 
 ```sh
 npm ci
@@ -46,33 +49,31 @@ Build a standalone APK for ARM64 phones and x86_64 emulators:
 npm run apk
 ```
 
-Output: `artifacts/idleRPGLeonidasv3-0.3.0.apk` and its `.sha256` file. The script refreshes generated native configuration before building. Generated native folders, caches, keys and build outputs are ignored by Git. Lockfile dependencies are committed.
-
-Browser checks use real WebGL rendering, not a mocked scene:
+Output: `artifacts/idleRPGLeonidasv3-0.4.0.apk` plus SHA-256. The build script refreshes generated native configuration. To archive a tested commit from a Git checkout, use `npm run zip`; GitHub Actions does this automatically.
 
 ```sh
 npx playwright install chromium
 npm run test:ui
-# CHROMIUM_PATH can select an existing Chromium installation.
+# CHROMIUM_PATH may select an existing Chromium.
 ```
 
-**GitHub Actions → Android test APK** runs TypeScript, gameplay and WebGL/browser checks, builds the APK and runs an installed-APK smoke test in an Android emulator. **Publish Android alpha** takes the successful build's run ID and publishes that exact commit's APK, checksum and changelog. It waits for the entire source workflow, including the emulator job, to succeed.
+GitHub Actions runs strict TypeScript, gameplay/save tests, real WebGL/browser interactions, a native APK build and an installed-APK Android emulator check. The publication workflow waits for all of them and publishes the exact tested commit's APK, source ZIP, checksums and changelog.
 
 ## Extend the game
 
-| File | Purpose |
+| Module | Purpose |
 | --- | --- |
-| `src/content/classes.ts` | Classes, weapon styles and data-driven ability kits |
-| `src/content/zones.ts` | Zones, enemies, bosses, rewards and main story |
-| `src/content/gear.ts` | Slots, shop gear, rarity colors and loot rarity distribution |
-| `src/content/quests.ts` | Daily objectives and temporary blessings |
-| `src/config.ts` | Module switches and economy/run/offline rules |
-| `src/appearance.ts` | Appearance choices and validation |
-| `src/engine.ts` | Pure gameplay transitions, combat, abilities and save migration |
-| `src/visuals/` | Original 3D models, scene lighting, rigs and battle effects |
-| `src/components/ThreeStage*` | Native Expo GL and browser WebGL canvas adapters |
-| `src/audio/`, `assets/audio/` | Audio lifecycle and bundled original sounds |
+| `src/content/classes.ts` | Fourteen classes, weapon styles and ability kits |
+| `src/content/zones.ts` | Regions, enemies, bosses/telegraphs and story |
+| `src/content/world.ts` | Races, factions, companions, stances, biomes and seeded sites |
+| `src/content/itemFactory.ts` | Regional item materials, designs, lore and vendor catalog |
+| `src/content/gear.ts` | Slots, introductory shop gear and rarity distributions |
+| `src/content/quests.ts` | Daily objectives and run blessings |
+| `src/config.ts` | Independent modules and economy/run/offline rules |
+| `src/engine.ts` | Pure gameplay transitions, walking/combat and save migration |
+| `src/visuals/` | Original models, materials, animation, regional scenery and cameras |
+| `src/components/` | Gameplay HUD, atlas, wardrobe, company, market and native/web canvas adapters |
+| `src/audio/` | Sound-school mapping and lifecycle |
+| `scripts/generate-audio.py` | Reproducible original music/SFX |
 
-See [EXTENDING.md](docs/EXTENDING.md) and the [class guide](docs/CLASSES.md). Asset provenance is documented in [assets/ATTRIBUTION.md](assets/ATTRIBUTION.md).
-
-This is a compact first 3D release: procedural models and rig transforms are deliberately simple. It does not yet include imported skeletal animation sets, character creation morph sliders, class talent trees, multiplayer or cloud saves. Physical device testing remains useful even after browser and emulator checks.
+See [the extension guide](docs/EXTENDING.md), [class guide](docs/CLASSES.md), [playing guide](docs/PLAYING.md) and [asset provenance](assets/ATTRIBUTION.md).

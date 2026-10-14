@@ -3,6 +3,16 @@ import {
   classFor,
   RARITIES,
   rollRarity,
+  forgeItem,
+  CATALOG,
+  COMPANIONS,
+  RACES,
+  FACTIONS,
+  STANCES,
+  generateRegion,
+  type RaceId,
+  type FactionId,
+  type Stance,
   type Rarity,
   type SpellEffect,
   ZONES,
@@ -23,7 +33,31 @@ import {
   type Appearance,
 } from "./appearance.ts";
 export type State = {
-  version: 3;
+  version: 4;
+  race: RaceId;
+  faction: FactionId;
+  companions: { owned: string[]; active: string | null };
+  tactics: { lane: number; stance: Stance };
+  world: {
+    mode: "battle" | "explore";
+    x: number;
+    z: number;
+    heading: number;
+    camera: "overview" | "third";
+    destination: string | null;
+    visited: string[];
+    enemyIndex: number | null;
+    elite: boolean;
+    site: string | null;
+  };
+  floats: {
+    id: number;
+    target: "hero" | "enemy";
+    amount: number;
+    kind: "damage" | "critical" | "heal" | "block" | "evade";
+    label: string;
+  }[];
+  floatSerial: number;
   lastBoss: null | {
     zoneId: string;
     gold: number;
@@ -39,6 +73,7 @@ export type State = {
     lowPower: boolean;
   };
   combat: {
+    turn: number;
     cooldowns: Record<string, number>;
     shield: number;
     shieldTurns: number;
@@ -88,6 +123,56 @@ const freshDaily = (now: number): State["daily"] => ({
   loot: 0,
   claimed: [],
 });
+const freshWorld = (): State["world"] => ({
+  mode: "battle",
+  x: 0,
+  z: 7,
+  heading: Math.PI,
+  camera: "overview",
+  destination: null,
+  visited: [],
+  enemyIndex: null,
+  elite: false,
+  site: null,
+});
+export const activeCompanion = (s: State) =>
+  MODULES.companions
+    ? COMPANIONS.find(
+        (c) =>
+          c.id === s.companions.active && s.companions.owned.includes(c.id),
+      )
+    : undefined;
+export const stanceFor = (s: State) =>
+  STANCES.find((t) => t.id === s.tactics.stance) ?? STANCES[0];
+export const regionNodes = (s: State) =>
+  generateRegion(
+    s.zone,
+    s.run.number,
+    ZONES[s.zone].level,
+    ZONES[s.zone].enemies.length,
+  );
+export function bossWarning(s: State) {
+  const mechanic = currentEnemy(s).mechanic;
+  return s.wave === 10 && mechanic
+    ? {
+        ...mechanic,
+        remaining: mechanic.every - (s.combat.turn % mechanic.every),
+      }
+    : null;
+}
+function float(
+  s: State,
+  target: "hero" | "enemy",
+  amount: number,
+  kind: State["floats"][number]["kind"] = "damage",
+  label = "",
+) {
+  s.floatSerial++;
+  s.floats = [
+    ...s.floats.slice(-7),
+    { id: s.floatSerial, target, amount, kind, label },
+  ];
+}
 export function stats(s: State) {
   const c = CLASSES.find((c) => c.id === s.classId) ?? CLASSES[0];
   const bonuses = [
@@ -100,20 +185,42 @@ export function stats(s: State) {
     attack:
       c.attack + (s.level - 1) * 3 + bonuses.reduce((n, b) => n + b.attack, 0),
     hp: c.hp + (s.level - 1) * 12 + bonuses.reduce((n, b) => n + b.hp, 0),
-    armor: bonuses.reduce((n, b) => n + b.armor, 0),
+    armor:
+      bonuses.reduce((n, b) => n + b.armor, 0) +
+      (activeCompanion(s)?.armor ?? 0),
+    critical: Math.min(
+      0.2,
+      Object.values(s.gear).reduce((n, i) => n + (i.critical ?? 0), 0) / 100,
+    ),
+    vitality: Math.min(
+      5,
+      Object.values(s.gear).reduce((n, i) => n + (i.vitality ?? 0), 0),
+    ),
   };
 }
 export function currentEnemy(s: State) {
   const z = ZONES[s.zone];
   return s.wave === RULES.encountersPerRun
     ? z.boss
-    : z.enemies[(s.wave + s.run.number - 2) % z.enemies.length];
+    : z.enemies[
+        s.world.enemyIndex === null
+          ? (s.wave + s.run.number - 2) % z.enemies.length
+          : s.world.enemyIndex % z.enemies.length
+      ];
 }
-export const enemyMax = (s: State) => currentEnemy(s).hp;
+export const enemyMax = (s: State) =>
+  Math.round(currentEnemy(s).hp * (s.world.elite && s.wave !== 10 ? 1.35 : 1));
 export function createState(classId = "warrior", now = Date.now()): State {
   const c = CLASSES.find((c) => c.id === classId) ?? CLASSES[0];
   const s: State = {
-    version: 3,
+    version: 4,
+    race: "human",
+    faction: "concord",
+    companions: { owned: [], active: null },
+    tactics: { lane: 0, stance: "balanced" },
+    world: freshWorld(),
+    floats: [],
+    floatSerial: 0,
     lastBoss: null,
     appearance: defaultAppearance(),
     settings: { music: false, effects: true, autoCast: false, lowPower: false },
@@ -155,6 +262,7 @@ const rollover = (s: State, now: number): State =>
 function resetRun(s: State, victory = false): State {
   const n: State = {
     ...s,
+    world: { ...freshWorld(), camera: s.world.camera },
     wave: 1,
     run: { number: s.run.number + 1, blessings: [], choicePending: false },
     combat: {
@@ -197,6 +305,7 @@ export function abandonRun(s: State): State {
 }
 export function freshCombat(): State["combat"] {
   return {
+    turn: 0,
     cooldowns: {},
     shield: 0,
     shieldTurns: 0,
@@ -218,8 +327,12 @@ function defeated(s: State, now: number, roll: number): State {
   const stateInventoryLength = s.inventory.length;
   const z = ZONES[s.zone];
   const boss = s.wave === RULES.encountersPerRun;
-  const multiplier = boss ? RULES.bossRewardMultiplier : 1;
-  reward(s, z.xp * multiplier, z.gold * multiplier);
+  const multiplier = boss
+    ? RULES.bossRewardMultiplier
+    : s.world.elite
+      ? 1.5
+      : 1;
+  reward(s, Math.round(z.xp * multiplier), Math.round(z.gold * multiplier));
   s.kills++;
   s.daily = { ...s.daily, kills: s.daily.kills + 1 };
   if (boss) {
@@ -252,24 +365,8 @@ function defeated(s: State, now: number, roll: number): State {
     s.inventory = [
       ...s.inventory,
       {
+        ...forgeItem(s.zone, slot, rarity, s.kills, weaponStyle),
         id: `loot-${now}-${s.kills}`,
-        name: `${boss ? "Crown" : "Mist"} ${weaponStyle ?? SLOT_NAMES[slot]}`,
-        slot,
-        weaponStyle,
-        attack: Math.max(
-          0,
-          Math.round(
-            (slot === "weapon"
-              ? 3 + s.zone * 3
-              : slot.includes("trinket")
-                ? 1 + s.zone
-                : 0) * m,
-          ),
-        ),
-        hp: slot === "weapon" ? 0 : Math.round((5 + s.zone * 6) * m),
-        armor: armored ? Math.round((1 + s.zone) * m) : 0,
-        rarity,
-        price: 8 + s.zone * 8 + Math.round(m * 3),
       },
     ];
     s.daily.loot++;
@@ -296,6 +393,15 @@ function defeated(s: State, now: number, roll: number): State {
       (RULES.blessingWaves as readonly number[]).includes(s.wave),
   };
   s.wave++;
+  if (s.world.site)
+    s.world = {
+      ...s.world,
+      mode: "explore",
+      visited: [...new Set([...s.world.visited, s.world.site])],
+      site: null,
+      enemyIndex: null,
+      elite: false,
+    };
   s.enemyHp = enemyMax(s);
   s.hp = Math.min(stats(s).hp, s.hp + 8);
   return s;
@@ -309,6 +415,7 @@ export function castAbility(
   const ability = classFor(state.classId).abilities.find((a) => a.id === id);
   if (
     !ability ||
+    state.world.mode === "explore" ||
     state.run.choicePending ||
     (state.combat.cooldowns[id] ?? 0) > 0
   )
@@ -322,7 +429,20 @@ export function castAbility(
     },
   };
   const power = stats(s);
-  const damage = Math.round(power.attack * (ability.damage ?? 0));
+  const critical = roll < power.critical;
+  const damage = Math.round(
+    power.attack *
+      (ability.damage ?? 0) *
+      stanceFor(s).attack *
+      (critical ? 1.5 : 1),
+  );
+  if (damage > 0)
+    float(s, "enemy", damage, critical ? "critical" : "damage", ability.name);
+  const healing = Math.min(
+    power.hp - s.hp,
+    Math.round(power.hp * (ability.heal ?? 0)),
+  );
+  if (healing > 0) float(s, "hero", healing, "heal", ability.name);
   s.enemyHp -= damage;
   s.hp = Math.min(power.hp, s.hp + Math.round(power.hp * (ability.heal ?? 0)));
   if (ability.shield) {
@@ -358,13 +478,36 @@ export function tick(
     lastSeen: now,
     combat: { ...base.combat, cooldowns: { ...base.combat.cooldowns } },
   };
-  if (MODULES.roguelike && s.run.choicePending) return s;
+  if (s.world.mode === "explore" || (MODULES.roguelike && s.run.choicePending))
+    return s;
   for (const id of Object.keys(s.combat.cooldowns))
     s.combat.cooldowns[id] = Math.max(0, s.combat.cooldowns[id] - 1);
   if (s.combat.formTurns > 0 && --s.combat.formTurns === 0)
     s.combat.form = "human";
 
-  const damage = stats(s).attack + (s.combat.dotTurns > 0 ? s.combat.dot : 0);
+  s.combat.turn++;
+  const critical = roll < stats(s).critical;
+  const companionDamage = activeCompanion(s)?.attack ?? 0;
+  const damage =
+    Math.round(stats(s).attack * stanceFor(s).attack * (critical ? 1.5 : 1)) +
+    companionDamage +
+    (s.combat.dotTurns > 0 ? s.combat.dot : 0);
+  float(
+    s,
+    "enemy",
+    damage,
+    critical ? "critical" : "damage",
+    companionDamage ? `+${companionDamage} companion` : "",
+  );
+  const healing = Math.min(
+    stats(s).hp - s.hp,
+    (s.combat.turn % 4 === 0 ? (activeCompanion(s)?.heal ?? 0) : 0) +
+      stats(s).vitality,
+  );
+  if (healing > 0) {
+    s.hp += healing;
+    float(s, "hero", healing, "heal");
+  }
   if (s.combat.dotTurns > 0) s.combat.dotTurns--;
   s.enemyHp -= damage;
   s.combat.event++;
@@ -382,11 +525,31 @@ export function tick(
   }
   if (s.combat.stun > 0) s.combat.stun--;
   else {
-    let incoming = damageTaken(currentEnemy(s).attack, stats(s).armor);
+    const warning = bossWarning({
+      ...s,
+      combat: { ...s.combat, turn: s.combat.turn - 1 },
+    });
+    const impact = warning && warning.remaining === 1;
+    const dodged = impact && s.tactics.lane !== warning.lane;
+    let incoming = Math.round(
+      damageTaken(
+        currentEnemy(s).attack *
+          (impact && !dodged ? warning.multiplier : 1) *
+          (s.world.elite && s.wave !== 10 ? 1.2 : 1),
+        stats(s).armor,
+      ) * stanceFor(s).incoming,
+    );
+    if (dodged) {
+      incoming = Math.round(incoming * 0.5);
+      float(s, "hero", 0, "evade", "DODGE");
+    } else if (impact)
+      s.log = `${warning.name} hits your lane! Move before the next impact.`;
     const absorbed = Math.min(incoming, s.combat.shield);
     s.combat.shield -= absorbed;
     incoming -= absorbed;
     s.hp -= incoming;
+    if (absorbed > 0) float(s, "hero", absorbed, "block");
+    if (incoming > 0) float(s, "hero", incoming);
     if (s.hp <= 0)
       return {
         ...resetRun(s),
@@ -448,7 +611,7 @@ export function changeZone(s: State, index: number): State {
 }
 export function equip(s: State, id: string): State {
   const item = s.inventory.find((i) => i.id === id);
-  if (!item) return s;
+  if (!item || s.level < (item.requiredLevel ?? 1)) return s;
   const old = s.gear[item.slot];
   const n = {
     ...s,
@@ -485,11 +648,12 @@ export function sell(s: State, id: string): State {
     : s;
 }
 export function buy(s: State, id: string, now = Date.now()): State {
-  const item = SHOP.find((i) => i.id === id);
+  const item = [...SHOP, ...CATALOG].find((i) => i.id === id);
   if (
     !MODULES.shop ||
     !item ||
     s.gold < item.price ||
+    s.level < (item.requiredLevel ?? 1) ||
     s.inventory.length >= s.bags * RULES.bagSize
   )
     return s;
@@ -510,7 +674,14 @@ export function buy(s: State, id: string, now = Date.now()): State {
         ...(item.slot === "weapon"
           ? {
               weaponStyle: classFor(s.classId).weapon,
-              name: `Dawnkeeper ${classFor(s.classId).weapon}`,
+              name:
+                item.id === "shop-sword"
+                  ? `Dawnkeeper ${classFor(s.classId).weapon}`
+                  : item.name.replace(
+                      /(?:Edge|Reaver|Oath)$/,
+                      classFor(s.classId).weapon[0].toUpperCase() +
+                        classFor(s.classId).weapon.slice(1),
+                    ),
             }
           : {}),
       },
@@ -614,6 +785,19 @@ export function decodeSave(raw: string | null, now = Date.now()): State {
       s.log =
         "Welcome to 0.3.0. Your progress and equipment have been preserved.";
     }
+    if (s.version === 3) {
+      s.version = 4;
+      s.race = "human";
+      s.faction = "concord";
+      s.companions = { owned: [], active: null };
+      s.tactics = { lane: 0, stance: "balanced" };
+      s.world = freshWorld();
+      s.floats = [];
+      s.floatSerial = 0;
+      s.combat = { ...s.combat, turn: 0 };
+      s.log =
+        "Welcome to 0.4.0. Your progress is preserved. Explore the frontier and choose your banner.";
+    }
     const num = (v: unknown) =>
       typeof v === "number" && Number.isFinite(v) && v >= 0;
     const integer = (v: unknown) => num(v) && Number.isSafeInteger(v);
@@ -624,6 +808,16 @@ export function decodeSave(raw: string | null, now = Date.now()): State {
       SLOTS.includes(i.slot) &&
       [i.attack, i.hp, i.armor, i.price].every(num) &&
       Object.hasOwn(RARITIES, i.rarity) &&
+      [
+        i.itemLevel ?? 0,
+        i.requiredLevel ?? 0,
+        i.critical ?? 0,
+        i.vitality ?? 0,
+        i.design ?? 0,
+      ].every(num) &&
+      ["description", "origin", "material", "tint"].every(
+        (k) => i[k] === undefined || typeof i[k] === "string",
+      ) &&
       (i.weaponStyle === undefined ||
         [
           "sword",
@@ -638,7 +832,32 @@ export function decodeSave(raw: string | null, now = Date.now()): State {
           "scythe",
         ].includes(i.weaponStyle));
     if (
-      s.version !== 3 ||
+      s.version !== 4 ||
+      !RACES.some((r) => r.id === s.race) ||
+      !FACTIONS.some((f) => f.id === s.faction) ||
+      !s.companions ||
+      !Array.isArray(s.companions.owned) ||
+      new Set(s.companions.owned).size !== s.companions.owned.length ||
+      !s.companions.owned.every((id: string) =>
+        COMPANIONS.some((c) => c.id === id),
+      ) ||
+      (s.companions.active !== null &&
+        !s.companions.owned.includes(s.companions.active)) ||
+      !s.tactics ||
+      ![-1, 0, 1].includes(s.tactics.lane) ||
+      !STANCES.some((t) => t.id === s.tactics.stance) ||
+      !validWorld(s.world) ||
+      !integer(s.floatSerial) ||
+      !Array.isArray(s.floats) ||
+      s.floats.length > 8 ||
+      !s.floats.every(
+        (f: any) =>
+          integer(f.id) &&
+          integer(f.amount) &&
+          ["hero", "enemy"].includes(f.target) &&
+          ["damage", "critical", "heal", "block", "evade"].includes(f.kind) &&
+          typeof f.label === "string",
+      ) ||
       !validAppearance(s.appearance) ||
       (s.lastBoss !== null &&
         (!s.lastBoss ||
@@ -658,6 +877,7 @@ export function decodeSave(raw: string | null, now = Date.now()): State {
       Array.isArray(s.combat.cooldowns) ||
       !Object.values(s.combat.cooldowns).every(integer) ||
       ![
+        s.combat.turn,
         s.combat.shield,
         s.combat.shieldTurns,
         s.combat.dot,
@@ -740,4 +960,190 @@ export function decodeSave(raw: string | null, now = Date.now()): State {
   } catch {
     return createState("warrior", now);
   }
+}
+
+export function chooseRace(s: State, id: RaceId): State {
+  return RACES.some((r) => r.id === id) ? { ...s, race: id } : s;
+}
+export function chooseFaction(s: State, id: FactionId): State {
+  return FACTIONS.some((f) => f.id === id)
+    ? {
+        ...s,
+        faction: id,
+        log: `${FACTIONS.find((f) => f.id === id)!.name}: ${FACTIONS.find((f) => f.id === id)!.motto}`,
+      }
+    : s;
+}
+export function hireCompanion(s: State, id: string): State {
+  const c = COMPANIONS.find((c) => c.id === id);
+  if (
+    !MODULES.companions ||
+    !c ||
+    s.companions.owned.includes(id) ||
+    s.gold < c.price ||
+    s.level < c.level
+  )
+    return s;
+  return {
+    ...s,
+    gold: s.gold - c.price,
+    companions: {
+      owned: [...s.companions.owned, id],
+      active: s.companions.active ?? id,
+    },
+    log: `${c.name} joins your company.`,
+  };
+}
+export function selectCompanion(s: State, id: string | null): State {
+  return id === null || s.companions.owned.includes(id)
+    ? { ...s, companions: { ...s.companions, active: id } }
+    : s;
+}
+export function setTactics(
+  s: State,
+  lane: number,
+  stance: Stance = s.tactics.stance,
+): State {
+  return [-1, 0, 1].includes(lane) && STANCES.some((t) => t.id === stance)
+    ? { ...s, tactics: { lane, stance } }
+    : s;
+}
+export function setCamera(s: State, camera: State["world"]["camera"]): State {
+  return ["overview", "third"].includes(camera)
+    ? { ...s, world: { ...s.world, camera } }
+    : s;
+}
+export function explore(s: State): State {
+  if (!MODULES.exploration) return s;
+  return {
+    ...s,
+    world: { ...s.world, mode: "explore", destination: null },
+    log: "Explore with the movement pad, or select a destination on the local map. Approach a site to interact.",
+  };
+}
+export function returnToBattle(s: State): State {
+  return {
+    ...s,
+    world: { ...s.world, mode: "battle", destination: null },
+    log: "Expedition resumed. Your selected stance and lane apply in combat.",
+  };
+}
+export function moveHero(s: State, x: number, z: number): State {
+  if (
+    !MODULES.exploration ||
+    s.world.mode !== "explore" ||
+    !Number.isFinite(x) ||
+    !Number.isFinite(z)
+  )
+    return s;
+  const length = Math.hypot(x, z);
+  if (!length) return s;
+  const step = Math.min(0.42, length);
+  return {
+    ...s,
+    world: {
+      ...s.world,
+      x: Math.max(-9, Math.min(9, s.world.x + (x / length) * step)),
+      z: Math.max(-9, Math.min(9, s.world.z + (z / length) * step)),
+      heading: Math.atan2(x, z),
+      destination: null,
+    },
+  };
+}
+export function navigateTo(s: State, id: string): State {
+  if (!MODULES.exploration || !regionNodes(s).some((n) => n.id === id))
+    return s;
+  return { ...s, world: { ...s.world, mode: "explore", destination: id } };
+}
+export function walkWorld(s: State): State {
+  if (s.world.mode !== "explore" || !s.world.destination) return s;
+  const target = regionNodes(s).find((n) => n.id === s.world.destination);
+  if (!target) return { ...s, world: { ...s.world, destination: null } };
+  const distance = Math.hypot(target.x - s.world.x, target.z - s.world.z);
+  if (distance < 0.3) return { ...s, world: { ...s.world, destination: null } };
+  const n = moveHero(s, target.x - s.world.x, target.z - s.world.z);
+  return { ...n, world: { ...n.world, destination: s.world.destination } };
+}
+export function nearestSite(s: State) {
+  return regionNodes(s)
+    .map((n) => ({
+      ...n,
+      distance: Math.hypot(n.x - s.world.x, n.z - s.world.z),
+    }))
+    .sort((a, b) => a.distance - b.distance)[0];
+}
+export function interactSite(s: State): State {
+  if (s.world.mode !== "explore") return s;
+  const site = nearestSite(s);
+  if (site.distance > 1.3 || s.level < site.level) return s;
+  if (site.kind === "camp")
+    return {
+      ...s,
+      hp: stats(s).hp,
+      log: "Rested at the wayfarer camp. Health fully restored.",
+    };
+  if (s.world.visited.includes(site.id))
+    return {
+      ...s,
+      log: "This site is cleared. New sites appear when the expedition ends.",
+    };
+  if (site.kind === "cache") {
+    const n = {
+      ...s,
+      world: { ...s.world, visited: [...s.world.visited, site.id] },
+    };
+    reward(n, Math.round(ZONES[s.zone].xp / 2), ZONES[s.zone].gold);
+    return {
+      ...n,
+      log: `Recovered a traveller’s cache. +${ZONES[s.zone].gold} gold.`,
+    };
+  }
+  if (s.run.choicePending)
+    return { ...s, log: "Choose your blessing before the next battle." };
+  if (site.kind === "boss" && s.wave !== 10)
+    return {
+      ...s,
+      log: `The sovereign’s gate opens after nine encounters. Current encounter: ${s.wave}/10.`,
+    };
+  if (site.kind !== "boss" && s.wave === 10)
+    return {
+      ...s,
+      log: "The sovereign awaits. Approach the northern boss gate, or resume the expedition.",
+    };
+  const n: State = {
+    ...s,
+    combat: { ...freshCombat(), event: s.combat.event },
+    world: {
+      ...s.world,
+      mode: "battle",
+      destination: null,
+      enemyIndex: site.enemyIndex,
+      elite: site.kind === "elite",
+      site: site.id,
+    },
+    log: `${site.kind === "elite" ? "Elite encounter" : "Encounter"} at ${site.name}.`,
+  };
+  n.enemyHp = enemyMax(n);
+  return n;
+}
+function validWorld(w: any): boolean {
+  return (
+    w &&
+    ["battle", "explore"].includes(w.mode) &&
+    [w.x, w.z, w.heading].every(Number.isFinite) &&
+    Math.abs(w.x) <= 9 &&
+    Math.abs(w.z) <= 9 &&
+    ["overview", "third"].includes(w.camera) &&
+    (w.destination === null || typeof w.destination === "string") &&
+    (w.site === null || typeof w.site === "string") &&
+    Array.isArray(w.visited) &&
+    w.visited.length <= 14 &&
+    w.visited.every((id: unknown) => typeof id === "string") &&
+    new Set(w.visited).size === w.visited.length &&
+    (w.enemyIndex === null ||
+      (Number.isSafeInteger(w.enemyIndex) &&
+        w.enemyIndex >= 0 &&
+        w.enemyIndex < 100)) &&
+    typeof w.elite === "boolean"
+  );
 }

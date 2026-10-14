@@ -1,5 +1,42 @@
 # Changelog
 
+## 0.4.0 — 14 October 2026
+
+### The frontier opens
+
+- Replace the small Adventure card with a full-height 3D gameplay viewport and compact overlaid health, spell, movement and tactical controls.
+- Add playable third-person exploration with a following camera; switching to/from the aerial view lifts the camera smoothly over the hero.
+- Add a seeded local atlas with movement, walk-to-destination paths, camps, caches, ordinary encounters, elites and a gated boss site. Each expedition generates a new layout; level requirements appear on the map.
+- Add five regions beyond the original three: Sundered Highlands, Glasswind Expanse, Hollowfen March, Rimefang Reach and Crown of the Still Sky. Eight regions, twenty-four ordinary enemy definitions, eight bosses and eight story chapters now form the campaign.
+- Extend the original second-clock story through a plague colossus, a bound frost dragon and Avaron, the Pale Regent. All names, stories, maps, geometry and equipment remain original.
+- Keep idle expeditions as an option. Exploration pauses combat until an encounter is chosen; cleared sites return the player to exploration. Roguelike blessings and permanent progress retain their existing roles.
+
+### Heritage, allies and tactics
+
+- Add six freely selectable races: Valeborn, Sylvaren, Stonekin, Emberbound, Veilborn and Drakari, with different proportions, ears, tusks, horns or skin.
+- Add two story factions, the Dawn Concord and Umbral Pact, with distinct beliefs, colors and camp banners. Every race/class can join either faction; allegiance is narrative/cosmetic in this alpha.
+- Add six permanent companions bought with earned in-game gold. One follows at a time; allies provide damage, armor or timed healing and appear alongside the hero.
+- Add left/centre/right positions and Balanced, Assault and Guard stances with explicit damage/defence tradeoffs.
+- Add lane telegraphs to later bosses. Moving away before impact reduces incoming damage; staying in the marked lane increases it.
+- Show outgoing and incoming damage, critical hits, healing, absorbed damage and dodges as separate animated floating numbers with bounded event history.
+
+### Materials, gear and sound
+
+- Replace chibi proportions with a taller articulated adventurer, fitted layered equipment, rivets, more restrained colors and original procedural surface maps.
+- Add biome lighting/fog, regional scenery, faction banners, surface detail, contact shadows and drifting motes/snow. Low graphics reduces scenery and particles as well as antialiasing.
+- Add 128 regional equipment catalog entries, three forged designs and five rarity tiers. New loot includes item/required level, origin, materials and original lore; weapon appearances adapt to class.
+- Add shaded, engraved equipment icons with colored rarity frames and different weapon silhouettes. Item cards show equipped-item comparisons; advanced jewelry can add critical chance or regeneration.
+- Replace the shared spell sound with eight elemental/ability-school sounds, stable ability-specific playback variations, bow/heavy/fist/shield sounds and a second original northern ambient theme.
+- Add original realistic fantasy launcher artwork. In-game 3D remains a lightweight procedural mobile presentation rather than the launcher illustration.
+
+### Compatibility and development
+
+- Retain all fourteen classes and twenty-eight abilities, sixteen slots, dailies, shops, offline rewards and the original save key.
+- Migrate schema-2 and schema-3 saves to schema 4 without losing permanent progress or equipment; keep the Android package/signing identity and increment versionCode to 3.
+- Extend modular content tables and optional exploration/companion switches; document the atlas, boss mechanics, item generation and sound mapping.
+- Expand gameplay/save tests, real WebGL browser interaction checks and installed-APK Android checks for the new features.
+- Include a source ZIP and SHA-256 alongside the standalone APK in the tested GitHub release workflow.
+
 ## 0.3.0 — 14 October 2026
 
 ### Characters, combat and presentation

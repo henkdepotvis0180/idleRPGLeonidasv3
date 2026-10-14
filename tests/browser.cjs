@@ -7,7 +7,8 @@ const fs = require("node:fs");
 const path = require("node:path");
 (async () => {
   const engine = await import("../src/engine.ts");
-  const { SLOTS, SHOP, CLASSES } = await import("../src/content.ts");
+  const { SLOTS, SHOP, CLASSES, ZONES, RACES, COMPANIONS, forgeItem } =
+    await import("../src/content.ts");
   const root = path.resolve(__dirname, "../dist");
   const server = http.createServer((req, res) => {
     const url = decodeURIComponent(req.url.split("?")[0]);
@@ -253,6 +254,9 @@ const path = require("node:path");
       .click();
     await nav(page, "Adventure");
     await page
+      .getByRole("button", { name: "Open world map", exact: true })
+      .click();
+    await page
       .getByRole("button", { name: "Travel to Ashen Ruins", exact: true })
       .click();
     await page.getByText("Ashen Ruins", { exact: true }).waitFor();
@@ -274,9 +278,9 @@ const path = require("node:path");
       "PASS: all 14 3D class models, weapon/armor equipment, rarities, shapeshift cast, dailies, story, shop, settings and 320px layout",
     );
 
-    for (let zone = 0; zone < 3; zone++) {
+    for (let zone = 0; zone < ZONES.length; zone++) {
       const bossState = engine.createState("mage");
-      bossState.level = zone === 0 ? 1 : 8;
+      bossState.level = ZONES[zone].level;
       bossState.zone = zone;
       bossState.wave = 10;
       bossState.enemyHp = engine.enemyMax(bossState);
@@ -304,7 +308,127 @@ const path = require("node:path");
       await page.close();
     }
     console.log(
-      "PASS: all three boss models and offensive spell buttons/cooldowns render and work",
+      "PASS: all eight boss models and offensive spell buttons/cooldowns render and work",
+    );
+
+    // Play the new 0.4 frontier, cameras, heritage, factions and companions through actual controls.
+    s = engine.createState("ranger");
+    s.level = 28;
+    s.gold = 5000;
+    s.hp = engine.stats(s).hp;
+    s.settings.effects = false;
+    s.gear = Object.fromEntries(
+      [
+        "weapon",
+        "helmet",
+        "chest",
+        "shoulders",
+        "boots",
+        "cloak",
+        "offhand",
+      ].map((slot, i) => [slot, forgeItem(6, slot, "epic", i, "bow")]),
+    );
+    s.world.mode = "explore";
+    page = await open(s);
+    await webgl(page);
+    const height = await page
+      .locator("canvas")
+      .evaluate((c) => c.getBoundingClientRect().height);
+    assert.ok(height > 450, `Gameplay canvas must be large; got ${height}`);
+    await page
+      .getByRole("button", { name: "Switch to third person", exact: true })
+      .click();
+    await page.waitForTimeout(1800);
+    await webgl(page);
+    await page.getByRole("button", { name: "Move east", exact: true }).click();
+    await page.screenshot({ path: "artifacts/screenshots/third-person.png" });
+    await page
+      .getByRole("button", { name: "Open world map", exact: true })
+      .click();
+    await page.screenshot({ path: "artifacts/screenshots/world-atlas.png" });
+    const cache = engine.regionNodes(s).find((n) => n.kind === "cache");
+    await page
+      .getByRole("button", { name: `Walk to ${cache.name}`, exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Open cache", exact: true })
+      .click({ timeout: 15000 });
+    const afterCache = await saved(page);
+    assert.ok(afterCache.world.visited.includes(cache.id));
+    assert.ok(afterCache.gold > 5000);
+    await page
+      .getByRole("button", { name: "Switch to overview", exact: true })
+      .click();
+    await page.waitForTimeout(1800);
+    await page.screenshot({
+      path: "artifacts/screenshots/exploration-overview.png",
+    });
+    await nav(page, "Hero");
+    for (const race of RACES) {
+      await page.getByRole("button", { name: race.name, exact: true }).click();
+      assert.equal((await saved(page)).race, race.id);
+      await webgl(page);
+    }
+    await page
+      .getByRole("button", { name: "Umbral Pact", exact: true })
+      .click();
+    assert.equal((await saved(page)).faction, "pact");
+    await page.screenshot({
+      path: "artifacts/screenshots/drakari-wardrobe.png",
+    });
+    await nav(page, "Shop");
+    await page
+      .getByRole("button", { name: "Companion lodge", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Hire Mossfang · 180 gold", exact: true })
+      .click();
+    assert.equal((await saved(page)).companions.active, "moss");
+    await page
+      .getByRole("button", { name: "Hire Lumen Wisp · 300 gold", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Bring Lumen Wisp", exact: true })
+      .click();
+    assert.equal((await saved(page)).companions.active, "lumen");
+    await nav(page, "Adventure");
+    await webgl(page);
+    await page
+      .getByRole("button", { name: "Return to combat", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Pause expedition", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Position right", exact: true })
+      .click();
+    await page
+      .getByRole("button", { name: "Stance Balanced", exact: true })
+      .click();
+    const tactical = await saved(page);
+    assert.equal(tactical.tactics.lane, 1);
+    assert.equal(tactical.tactics.stance, "assault");
+    await page.screenshot({
+      path: "artifacts/screenshots/tactical-combat.png",
+    });
+    await page.setViewportSize({ width: 320, height: 740 });
+    assert.equal(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth > innerWidth,
+      ),
+      false,
+    );
+    await page
+      .getByRole("button", { name: "Switch to third person", exact: true })
+      .click();
+    await page.waitForTimeout(1200);
+    await webgl(page);
+    await page.screenshot({
+      path: "artifacts/screenshots/third-person-320.png",
+    });
+    await page.close();
+    console.log(
+      "PASS: large gameplay viewport, playable third person, aerial camera swap, procedural walk-to-site/cache, six rendered races, faction choice, companion hiring/switching and tactical position/stance",
     );
 
     // A real v2 structure must enter the new app without going through character creation.
@@ -323,7 +447,7 @@ const path = require("node:path");
       .getByRole("button", { name: "Pause expedition", exact: true })
       .click();
     const migrated = await saved(page);
-    assert.equal(migrated.version, 3);
+    assert.equal(migrated.version, 4);
     assert.equal(migrated.level, 5);
     assert.equal(migrated.gold, 450);
     assert.deepEqual(migrated.bosses, ["woods"]);

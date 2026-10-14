@@ -50,6 +50,7 @@ jobs:
           {
             printf '# Leonidas V3 %s — Android test alpha\n\n' "$version"
             printf 'Download the APK below on an Android 7.0+ ARM64 device with OpenGL ES 3 support. No Expo Go or development server needed. Test signature; install over the existing app to preserve your local save.\n\n'
+            printf 'The source ZIP contains the tested source, lockfile, documentation and build scripts. Extract it, run npm ci, then npm run apk with JDK 21 and Android SDK installed. The APK is a separate download.\n\n'
             printf 'Built after successful TypeScript, gameplay, real WebGL/Playwright and installed-APK Android emulator checks in GitHub Actions. Physical device feedback is welcome.\n\n'
             printf 'Build: https://github.com/%s/actions/runs/%s\n\n' "$GH_REPO" "$SOURCE_RUN"
             printf '## SHA-256\n\n```\n'
@@ -58,4 +59,4 @@ jobs:
             cat CHANGELOG.md
             printf '\n[Update log](https://github.com/%s/blob/main/UPDATELOG.md) · [Extension guide](https://github.com/%s/blob/main/docs/EXTENDING.md)\n' "$GH_REPO" "$GH_REPO"
           } > release-notes.md
-          gh release create "v$version" artifacts/*.apk artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android alpha" --notes-file release-notes.md --prerelease
+          gh release create "v$version" artifacts/*.apk artifacts/*.zip artifacts/*.sha256 --target "$SOURCE_SHA" --title "Leonidas V3 v$version — Android alpha" --notes-file release-notes.md --prerelease

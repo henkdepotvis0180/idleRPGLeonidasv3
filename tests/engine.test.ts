@@ -388,7 +388,7 @@ test("0.2.0 saves migrate without losing class, quests, gear, currencies or prog
   delete s.lastBoss;
   s.gear.helmet.name = "Helm van de dageraad";
   const n = decodeSave(JSON.stringify(s), now);
-  assert.equal(n.version, 3);
+  assert.equal(n.version, 4);
   assert.equal(n.classId, "bard");
   assert.equal(n.gold, 380);
   assert.equal(n.level, 7);

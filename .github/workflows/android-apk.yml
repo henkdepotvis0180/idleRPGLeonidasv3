@@ -25,7 +25,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: npm run test:ui
         env:
-          EXPO_NO_TELEMETRY: '1'
+          EXPO_NO_TELEMETRY: "1"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -51,11 +51,13 @@ jobs:
           packages: "platform-tools platforms;android-36 build-tools;36.0.0 ndk;27.1.12297006 cmake;3.22.1"
       - run: npm ci
       - run: npm run apk
+      - run: npm run zip
       - uses: actions/upload-artifact@v4
         with:
           name: idleRPGLeonidasv3-test-apk
           path: |
             artifacts/*.apk
+            artifacts/*.zip
             artifacts/*.sha256
           if-no-files-found: error
 

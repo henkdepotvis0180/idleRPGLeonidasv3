@@ -4,6 +4,9 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { BattleScene } from "./src/components/BattleScene";
+import { AdventureScreen } from "./src/components/AdventureScreen";
+import { CompanyPanel } from "./src/components/CompanyPanel";
+import { ItemMarket } from "./src/components/ItemMarket";
 import { CharacterPanel } from "./src/components/CharacterPanel";
 import { AbilityPanel } from "./src/components/AbilityPanel";
 import { GearIcon } from "./src/components/GearIcon";
@@ -43,6 +46,8 @@ import {
   stats,
   tick,
   xpNeeded,
+  walkWorld,
+  moveHero,
   type State,
 } from "./src/engine";
 // Keep the original key: 0.2.0 saves are migrated in-place by decodeSave.
@@ -70,6 +75,7 @@ function Game() {
   const [tab, setTab] = useState("Adventure");
   const [actionVersion, setActionVersion] = useState(0);
   const [running, setRunning] = useState(true);
+  const [companyOpen, setCompanyOpen] = useState(false);
   const [foreground, setForeground] = useState(true);
   const [saveError, setSaveError] = useState("");
   const scroll = useRef<ScrollView>(null);
@@ -162,6 +168,11 @@ function Game() {
     setState((s) => fn(s));
     setActionVersion((v) => v + 1);
   };
+  useEffect(() => {
+    if (!loaded || !selected || !foreground) return;
+    const timer = setInterval(() => setState((s) => walkWorld(s)), 120);
+    return () => clearInterval(timer);
+  }, [loaded, selected, foreground]);
   const power = stats(state);
   const hero = classFor(state.classId);
   const zone = ZONES[state.zone];
@@ -169,13 +180,13 @@ function Game() {
   const itemCard = (item: Item, shop = false) => (
     <Card key={item.id} color={RARITIES[item.rarity].color}>
       <View style={ui.row}>
-        <GearIcon slot={item.slot} rarity={item.rarity} size={50} />
+        <GearIcon slot={item.slot} rarity={item.rarity} item={item} size={56} />
         <View style={{ flex: 1, gap: 4 }}>
           <Text style={ui.eyebrow}>
             {RARITIES[item.rarity].name} · {SLOT_NAMES[item.slot]}
           </Text>
           <Text style={[ui.subheading, { color: RARITIES[item.rarity].color }]}>
-            {shop && item.slot === "weapon"
+            {shop && item.id === "shop-sword"
               ? `Dawnkeeper ${hero.weapon}`
               : item.name}
           </Text>
@@ -183,12 +194,36 @@ function Game() {
       </View>
       <Text style={ui.body}>
         +{item.attack} ATK · +{item.hp} HP · +{item.armor} ARM
+        {!!item.critical && ` · +${item.critical}% CRIT`}
+        {!!item.vitality && ` · +${item.vitality} REGEN`}
       </Text>
+      {!!item.itemLevel && (
+        <Text style={ui.eyebrow}>
+          Item level {item.itemLevel} · Requires level {item.requiredLevel} ·{" "}
+          {item.origin}
+        </Text>
+      )}
+      {!!item.material && <Text style={ui.small}>{item.material}</Text>}
+      {!!item.description && (
+        <Text style={[ui.body, { color: "#bfbaa7", fontStyle: "italic" }]}>
+          {item.description}
+        </Text>
+      )}
+      {!shop && (
+        <Text style={ui.small}>
+          Equipped in this slot: {state.gear[item.slot]?.name ?? "Nothing"}
+          {state.gear[item.slot]
+            ? ` · ATK ${item.attack - state.gear[item.slot]!.attack >= 0 ? "+" : ""}${item.attack - state.gear[item.slot]!.attack} · HP ${item.hp - state.gear[item.slot]!.hp >= 0 ? "+" : ""}${item.hp - state.gear[item.slot]!.hp}`
+            : ""}
+        </Text>
+      )}
       {shop ? (
         <Button
           label={`Buy · ${item.price} gold`}
           disabled={
-            state.gold < item.price || state.inventory.length >= state.bags * 12
+            state.gold < item.price ||
+            state.level < (item.requiredLevel ?? 1) ||
+            state.inventory.length >= state.bags * 12
           }
           onPress={() => act((s) => buy(s, item.id))}
         />
@@ -196,6 +231,7 @@ function Game() {
         <View style={ui.actions}>
           <Button
             label={`Equip ${item.name}`}
+            disabled={state.level < (item.requiredLevel ?? 1)}
             onPress={() => act((s) => equip(s, item.id))}
           />
           <Button
@@ -216,10 +252,24 @@ function Game() {
   return (
     <SafeAreaView style={ui.root}>
       <StatusBar style="light" />
-      <View style={ui.header}>
+      <View
+        style={[
+          ui.header,
+          selected &&
+            tab === "Adventure" && {
+              paddingVertical: 7,
+              paddingHorizontal: 14,
+            },
+        ]}
+      >
         <View>
           <Text style={ui.eyebrow}>THE SHATTERED DAWN</Text>
-          <Text style={ui.title}>
+          <Text
+            style={[
+              ui.title,
+              selected && tab === "Adventure" && { fontSize: 20 },
+            ]}
+          >
             LEONIDAS{" "}
             <Text style={{ fontSize: 13, color: "#bdabc9" }}> / idle</Text>
           </Text>
@@ -283,7 +333,7 @@ function Game() {
         </ScrollView>
       ) : (
         <>
-          <View style={{ paddingHorizontal: 18, paddingBottom: 10, gap: 6 }}>
+          <View style={{ paddingHorizontal: 14, paddingBottom: 7, gap: 4 }}>
             <View style={ui.row}>
               <Text style={ui.body}>
                 {hero.icon} {hero.name}
@@ -296,317 +346,235 @@ function Game() {
               {state.hp}/{power.hp} HP · {power.armor} ARM
             </Text>
           </View>
-          <ScrollView ref={scroll} contentContainerStyle={ui.content}>
-            {!!saveError && (
-              <Text style={{ color: "#ffc0ad" }}>{saveError}</Text>
-            )}
-            {MODULES.offlineRewards && state.offline && (
-              <Card>
-                <Text style={ui.eyebrow}>WHILE YOU WERE AWAY</Text>
-                <Text style={ui.subheading}>Your daylight kept growing.</Text>
-                <Text style={ui.body}>
-                  {Math.floor(state.offline.seconds / 60)} minutes · +
-                  {state.offline.xp} XP · +{state.offline.gold} gold
+          {tab === "Adventure" ? (
+            <>
+              {!!saveError && (
+                <Text style={{ color: "#ffc0ad", paddingHorizontal: 14 }}>
+                  {saveError}
                 </Text>
-                <Button
-                  label="Collect offline rewards"
-                  onPress={() => act(claimOffline)}
-                />
-                <Text style={ui.small}>
-                  Up to 8 hours per absence. No offline boss wins, quest kills
-                  or loot.
-                </Text>
-              </Card>
-            )}
-            {tab === "Adventure" && (
-              <>
-                <Text style={ui.eyebrow}>{zone.subtitle}</Text>
-                <Text style={ui.heading}>{zone.name}</Text>
-                <BattleScene
-                  state={state}
-                  running={running}
-                  active={foreground}
-                />
-                {state.lastBoss && (
-                  <Card
-                    color={
-                      state.lastBoss.rarity
-                        ? RARITIES[state.lastBoss.rarity].color
-                        : "#e3c48c"
-                    }
-                  >
-                    <Text style={ui.eyebrow}>BOSS DEFEATED</Text>
-                    <Text style={ui.subheading}>A hard-earned victory</Text>
-                    <Text style={ui.gold}>
-                      +{state.lastBoss.xp} XP · +{state.lastBoss.gold} gold
-                    </Text>
-                    <Text style={ui.body}>
-                      {state.lastBoss.itemName ??
-                        "Bag full — make room for the next drop."}
-                    </Text>
-                    <Text style={ui.small}>
-                      Bosses grant 2× normal rewards. Epic drops are special
-                      finds.
-                    </Text>
-                    <Button
-                      label="Dismiss rewards"
-                      secondary
-                      onPress={() => act((s) => ({ ...s, lastBoss: null }))}
-                    />
-                  </Card>
-                )}
-                {MODULES.roguelike && state.run.choicePending && (
+              )}
+              {MODULES.offlineRewards && state.offline && (
+                <View style={{ padding: 10 }}>
+                  <Button
+                    label="Collect offline rewards"
+                    onPress={() => act(claimOffline)}
+                  />
+                </View>
+              )}
+              <AdventureScreen
+                state={state}
+                running={running}
+                active={foreground}
+                toggleRunning={() => setRunning((v) => !v)}
+                act={act}
+                move={(x, z) => setState((s) => moveHero(s, x, z))}
+              />
+            </>
+          ) : (
+            <ScrollView ref={scroll} contentContainerStyle={ui.content}>
+              {!!saveError && (
+                <Text style={{ color: "#ffc0ad" }}>{saveError}</Text>
+              )}
+              {MODULES.offlineRewards && state.offline && (
+                <Card>
+                  <Text style={ui.eyebrow}>WHILE YOU WERE AWAY</Text>
+                  <Text style={ui.subheading}>Your daylight kept growing.</Text>
+                  <Text style={ui.body}>
+                    {Math.floor(state.offline.seconds / 60)} minutes · +
+                    {state.offline.xp} XP · +{state.offline.gold} gold
+                  </Text>
+                  <Button
+                    label="Collect offline rewards"
+                    onPress={() => act(claimOffline)}
+                  />
+                  <Text style={ui.small}>
+                    Up to 8 hours per absence. No offline boss wins, quest kills
+                    or loot.
+                  </Text>
+                </Card>
+              )}
+              {tab === "Hero" && (
+                <CharacterPanel state={state} act={act} active={foreground} />
+              )}
+              {tab === "Bag" && (
+                <>
+                  <Text style={ui.heading}>Traveller’s bag</Text>
+                  <Text style={ui.body}>
+                    {state.inventory.length}/{state.bags * 12} slots ·{" "}
+                    {state.bags}/4 bags
+                  </Text>
+                  <Button
+                    label="Extra bag · 150 gold"
+                    disabled={state.gold < 150 || state.bags >= 4}
+                    secondary
+                    onPress={() => act(buyBag)}
+                  />
+                  {!state.inventory.length && (
+                    <Card>
+                      <Text style={ui.body}>
+                        No loot yet. Defeat enemies or visit the travelling
+                        smith.
+                      </Text>
+                    </Card>
+                  )}
+                  {state.inventory.map((item) => itemCard(item))}
+                </>
+              )}
+              {tab === "Quests" && (
+                <>
+                  <Text style={ui.heading}>The shattered daylight</Text>
                   <Card>
                     <Text style={ui.eyebrow}>
-                      REST POINT · TEMPORARY BLESSING
+                      STORY · {Math.min(chapter + 1, ZONES.length)}
                     </Text>
-                    <Text style={ui.subheading}>Choose your strength</Text>
                     <Text style={ui.body}>
-                      Combat waits for your choice. This bonus lasts until your
-                      run ends.
+                      {ZONES[chapter]?.story ?? EPILOGUE}
                     </Text>
-                    {BLESSINGS.map((b) => (
-                      <Button
-                        key={b.id}
-                        label={`${b.name} · ${b.description}`}
-                        onPress={() => act((s) => chooseBlessing(s, b.id))}
-                      />
-                    ))}
+                    {state.mainClaimed < ZONES.length ? (
+                      <>
+                        <Text style={ui.subheading}>
+                          Defeat {ZONES[state.mainClaimed].boss.name}
+                        </Text>
+                        <Text style={ui.small}>
+                          +{RULES.storyXpPerChapter * (state.mainClaimed + 1)}{" "}
+                          XP · +{RULES.storyGold} gold
+                        </Text>
+                        <Button
+                          label="Claim chapter reward"
+                          disabled={
+                            !state.bosses.includes(ZONES[state.mainClaimed].id)
+                          }
+                          onPress={() => act(claimMain)}
+                        />
+                      </>
+                    ) : (
+                      <Text style={ui.gold}>
+                        All {ZONES.length} chapters completed.
+                      </Text>
+                    )}
                   </Card>
-                )}
-                <Card>
-                  <View style={ui.row}>
-                    <Text style={ui.subheading}>
-                      {currentEnemy(state).name}
-                    </Text>
-                    <Text style={ui.small}>{state.enemyHp} HP</Text>
-                  </View>
-                  <Bar
-                    value={state.enemyHp}
-                    max={enemyMax(state)}
-                    color="#dd939e"
-                  />
-                  <Text style={ui.small}>
-                    YOUR DAYLIGHT · {state.hp}/{power.hp}
+                  {MODULES.dailyQuests &&
+                    DAILY_QUESTS.map((q) => (
+                      <Card key={q.id}>
+                        <Text style={ui.eyebrow}>
+                          DAILY · RESETS AT 00:00 UTC
+                        </Text>
+                        <Text style={ui.subheading}>{q.name}</Text>
+                        <Text style={ui.body}>
+                          {q.description} ·{" "}
+                          {Math.min(q.target, state.daily[q.id])}/{q.target}
+                        </Text>
+                        <Bar value={state.daily[q.id]} max={q.target} />
+                        <Text style={ui.small}>
+                          +{q.xp} XP · +{q.gold} gold
+                        </Text>
+                        <Button
+                          label={
+                            state.daily.claimed.includes(q.id)
+                              ? "Already collected"
+                              : `Claim ${q.name}`
+                          }
+                          disabled={
+                            state.daily.day !==
+                              new Date().toISOString().slice(0, 10) ||
+                            state.daily.claimed.includes(q.id) ||
+                            state.daily[q.id] < q.target
+                          }
+                          onPress={() => act((s) => claimDaily(s, q.id))}
+                        />
+                      </Card>
+                    ))}
+                </>
+              )}
+              {MODULES.shop && tab === "Shop" && (
+                <>
+                  <Text style={ui.heading}>The travelling smith</Text>
+                  <Text style={ui.body}>
+                    “Gold fades. Good craftsmanship endures.” Weapons adapt to
+                    your current class.
                   </Text>
-                  <Bar value={state.hp} max={power.hp} color="#83ccb3" />
-                  <Text style={ui.body}>{state.log}</Text>
-                  <Button
-                    label={running ? "Pause expedition" : "Resume expedition"}
-                    secondary
-                    onPress={() => setRunning((v) => !v)}
-                  />
-                </Card>
-                <AbilityPanel state={state} running={running} act={act} />
-                {MODULES.roguelike && (
-                  <>
-                    <Text style={ui.small}>
-                      Blessings:{" "}
-                      {state.run.blessings.length
-                        ? state.run.blessings
-                            .map(
-                              (id) => BLESSINGS.find((b) => b.id === id)?.name,
-                            )
-                            .join(" · ")
-                        : "none yet"}
-                      . Temporary bonuses fade after each run.
+                  {MODULES.companions && (
+                    <Button
+                      label={
+                        companyOpen
+                          ? "Close companion lodge"
+                          : "Companion lodge"
+                      }
+                      secondary
+                      onPress={() => setCompanyOpen((v) => !v)}
+                    />
+                  )}
+                  {companyOpen && <CompanyPanel state={state} act={act} />}
+                  {SHOP.map((item) => itemCard(item, true))}
+                  <ItemMarket state={state} itemCard={itemCard} />
+                </>
+              )}
+              {tab === "Settings" && (
+                <>
+                  <Text style={ui.heading}>Camp settings</Text>
+                  <Card>
+                    <Text style={ui.subheading}>Sound & music</Text>
+                    <Text style={ui.body}>
+                      An original ambient theme, sword impacts, spell sounds and
+                      a boss victory chime. No third-party samples or music
+                      royalties.
                     </Text>
                     <Button
-                      label="Start fresh run · keep gear and level"
+                      label={`Music ${state.settings.music ? "on" : "off"}`}
                       secondary
-                      onPress={() => act(abandonRun)}
+                      onPress={() =>
+                        act((s) => setSetting(s, "music", !s.settings.music))
+                      }
                     />
-                  </>
-                )}
-                <Text style={ui.heading}>World map</Text>
-                {ZONES.map((z, i) => (
-                  <Pressable
-                    key={z.id}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Travel to ${z.name}`}
-                    disabled={state.level < z.level}
-                    onPress={() => act((s) => changeZone(s, i))}
-                  >
-                    <Card
-                      color={state.zone === i ? "#e3c48c" : undefined}
-                      style={{ opacity: state.level < z.level ? 0.45 : 1 }}
-                    >
-                      <Text style={ui.subheading}>
-                        {i + 1}. {z.name}
-                        {state.zone === i ? " · ACTIVE" : ""}
-                      </Text>
-                      <Text style={ui.small}>
-                        Level {z.level} · {z.boss.name}{" "}
-                        {state.bosses.includes(z.id) ? "✓" : ""}
-                      </Text>
-                    </Card>
-                  </Pressable>
-                ))}
-              </>
-            )}
-            {tab === "Hero" && (
-              <CharacterPanel state={state} act={act} active={foreground} />
-            )}
-            {tab === "Bag" && (
-              <>
-                <Text style={ui.heading}>Traveller’s bag</Text>
-                <Text style={ui.body}>
-                  {state.inventory.length}/{state.bags * 12} slots ·{" "}
-                  {state.bags}/4 bags
-                </Text>
-                <Button
-                  label="Extra bag · 150 gold"
-                  disabled={state.gold < 150 || state.bags >= 4}
-                  secondary
-                  onPress={() => act(buyBag)}
-                />
-                {!state.inventory.length && (
+                    <Button
+                      label={`Sound effects ${state.settings.effects ? "on" : "off"}`}
+                      secondary
+                      onPress={() =>
+                        act((s) =>
+                          setSetting(s, "effects", !s.settings.effects),
+                        )
+                      }
+                    />
+                    {!!audioError && <Text style={ui.small}>{audioError}</Text>}
+                  </Card>
                   <Card>
-                    <Text style={ui.body}>
-                      No loot yet. Defeat enemies or visit the travelling smith.
+                    <Text style={ui.subheading}>Graphics</Text>
+                    <Button
+                      label={`Low graphics ${state.settings.lowPower ? "on" : "off"}`}
+                      secondary
+                      onPress={() =>
+                        act((s) =>
+                          setSetting(s, "lowPower", !s.settings.lowPower),
+                        )
+                      }
+                    />
+                    <Text style={ui.small}>
+                      Low graphics disables antialiasing and reduces browser
+                      preview resolution. 3D scenes and audio suspend when the
+                      app is in the background.
                     </Text>
                   </Card>
-                )}
-                {state.inventory.map((item) => itemCard(item))}
-              </>
-            )}
-            {tab === "Quests" && (
-              <>
-                <Text style={ui.heading}>The shattered daylight</Text>
-                <Card>
-                  <Text style={ui.eyebrow}>
-                    STORY · {Math.min(chapter + 1, ZONES.length)}
-                  </Text>
-                  <Text style={ui.body}>
-                    {ZONES[chapter]?.story ?? EPILOGUE}
-                  </Text>
-                  {state.mainClaimed < ZONES.length ? (
-                    <>
-                      <Text style={ui.subheading}>
-                        Defeat {ZONES[state.mainClaimed].boss.name}
-                      </Text>
-                      <Text style={ui.small}>
-                        +{RULES.storyXpPerChapter * (state.mainClaimed + 1)} XP
-                        · +{RULES.storyGold} gold
-                      </Text>
-                      <Button
-                        label="Claim chapter reward"
-                        disabled={
-                          !state.bosses.includes(ZONES[state.mainClaimed].id)
-                        }
-                        onPress={() => act(claimMain)}
-                      />
-                    </>
-                  ) : (
-                    <Text style={ui.gold}>
-                      All {ZONES.length} chapters completed.
+                  <Card>
+                    <Text style={ui.subheading}>Save & version</Text>
+                    <Text style={ui.body}>
+                      Version 0.4.0 · English · Android
                     </Text>
-                  )}
-                </Card>
-                {MODULES.dailyQuests &&
-                  DAILY_QUESTS.map((q) => (
-                    <Card key={q.id}>
-                      <Text style={ui.eyebrow}>
-                        DAILY · RESETS AT 00:00 UTC
-                      </Text>
-                      <Text style={ui.subheading}>{q.name}</Text>
-                      <Text style={ui.body}>
-                        {q.description} ·{" "}
-                        {Math.min(q.target, state.daily[q.id])}/{q.target}
-                      </Text>
-                      <Bar value={state.daily[q.id]} max={q.target} />
-                      <Text style={ui.small}>
-                        +{q.xp} XP · +{q.gold} gold
-                      </Text>
-                      <Button
-                        label={
-                          state.daily.claimed.includes(q.id)
-                            ? "Already collected"
-                            : `Claim ${q.name}`
-                        }
-                        disabled={
-                          state.daily.day !==
-                            new Date().toISOString().slice(0, 10) ||
-                          state.daily.claimed.includes(q.id) ||
-                          state.daily[q.id] < q.target
-                        }
-                        onPress={() => act((s) => claimDaily(s, q.id))}
-                      />
-                    </Card>
-                  ))}
-              </>
-            )}
-            {MODULES.shop && tab === "Shop" && (
-              <>
-                <Text style={ui.heading}>The travelling smith</Text>
-                <Text style={ui.body}>
-                  “Gold fades. Good craftsmanship endures.” Weapons adapt to
-                  your current class.
-                </Text>
-                {SHOP.map((item) => itemCard(item, true))}
-              </>
-            )}
-            {tab === "Settings" && (
-              <>
-                <Text style={ui.heading}>Camp settings</Text>
-                <Card>
-                  <Text style={ui.subheading}>Sound & music</Text>
-                  <Text style={ui.body}>
-                    An original ambient theme, sword impacts, spell sounds and a
-                    boss victory chime. No third-party samples or music
-                    royalties.
-                  </Text>
-                  <Button
-                    label={`Music ${state.settings.music ? "on" : "off"}`}
-                    secondary
-                    onPress={() =>
-                      act((s) => setSetting(s, "music", !s.settings.music))
-                    }
-                  />
-                  <Button
-                    label={`Sound effects ${state.settings.effects ? "on" : "off"}`}
-                    secondary
-                    onPress={() =>
-                      act((s) => setSetting(s, "effects", !s.settings.effects))
-                    }
-                  />
-                  {!!audioError && <Text style={ui.small}>{audioError}</Text>}
-                </Card>
-                <Card>
-                  <Text style={ui.subheading}>Graphics</Text>
-                  <Button
-                    label={`Low graphics ${state.settings.lowPower ? "on" : "off"}`}
-                    secondary
-                    onPress={() =>
-                      act((s) =>
-                        setSetting(s, "lowPower", !s.settings.lowPower),
-                      )
-                    }
-                  />
-                  <Text style={ui.small}>
-                    Low graphics disables antialiasing and reduces browser
-                    preview resolution. 3D scenes and audio suspend when the app
-                    is in the background.
-                  </Text>
-                </Card>
-                <Card>
-                  <Text style={ui.subheading}>Save & version</Text>
-                  <Text style={ui.body}>Version 0.3.0 · English · Android</Text>
-                  <Text style={ui.small}>
-                    Your 0.2.0 save upgrades automatically. Progress is stored
-                    on this device. Uninstalling removes it; install updates
-                    over the existing app.
-                  </Text>
-                </Card>
-              </>
-            )}
-            <Text
-              style={[ui.small, { textAlign: "center", paddingVertical: 16 }]}
-            >
-              LEONIDAS V3 · ALPHA 0.3.0 · {state.kills} victories{"\n"}Original
-              models, gear icons and procedural audio
-            </Text>
-          </ScrollView>
+                    <Text style={ui.small}>
+                      Your 0.2.0 and 0.3.0 saves upgrade automatically. Progress
+                      is stored on this device. Uninstalling removes it; install
+                      updates over the existing app.
+                    </Text>
+                  </Card>
+                </>
+              )}
+              <Text
+                style={[ui.small, { textAlign: "center", paddingVertical: 16 }]}
+              >
+                LEONIDAS V3 · ALPHA 0.4.0 · {state.kills} victories{"\n"}
+                Original models, gear icons and procedural audio
+              </Text>
+            </ScrollView>
+          )}
           <View style={ui.nav}>
             {TABS.map((t) => (
               <Pressable

@@ -53,6 +53,15 @@ export type Item = {
   rarity: Rarity;
   weaponStyle?: import("./classes.ts").WeaponStyle;
   price: number;
+  itemLevel?: number;
+  requiredLevel?: number;
+  description?: string;
+  origin?: string;
+  material?: string;
+  tint?: string;
+  critical?: number;
+  vitality?: number;
+  design?: number;
 };
 export const SHOP: Item[] = [
   {

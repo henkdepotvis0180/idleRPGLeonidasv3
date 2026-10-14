@@ -1,6 +1,6 @@
 {
   "name": "idle-rpg-leonidas-v3",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "main": "index.ts",
   "scripts": {
@@ -11,7 +11,8 @@
     "bundle:android": "expo export --platform android",
     "build:android": "npx eas-cli build --platform android --profile preview",
     "apk": "bash scripts/build-apk.sh",
-    "test:ui": "expo export --platform web --max-workers 2 && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/browser.cjs"
+    "test:ui": "expo export --platform web --max-workers 2 && node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON tests/browser.cjs",
+    "zip": "bash scripts/build-source-zip.sh"
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.16",

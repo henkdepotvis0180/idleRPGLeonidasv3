@@ -1,5 +1,21 @@
 # Update log
 
+## 14 October 2026 — 0.4.0: the frontier opens
+
+A full-height gameplay viewport, playable third-person exploration and a seeded local atlas replace the small Adventure scene. The original second-clock campaign now spans eight regions, twenty-four ordinary enemy definitions and eight bosses. Six races, two narrative factions, six permanent purchasable companions, three lanes/stances, boss telegraphs, regional equipment and school-specific audio build on the working 0.3.0 foundation.
+
+The presentation moves away from chibi proportions toward taller articulated figures, fitted equipment and restrained materials. This remains an original lightweight procedural 3D alpha, with compact regional exploration rather than a seamless continent. The launcher image is separate promotional illustration. See [the changelog](CHANGELOG.md), [playing guide](docs/PLAYING.md) and [extension guide](docs/EXTENDING.md).
+
+The package remains `com.leonidas.idlerpgv3`, versionCode is `3`, and schemas 2/3 migrate to schema 4 under the existing save key. Existing class, level, currencies, gear, appearance, quests and boss progress are retained. New saves include heritage, faction, companion ownership, tactics, world location, destination and camera choice.
+
+### Local validation
+
+- Strict TypeScript and all **49 gameplay/migration tests passed**, including 112 class/region progression simulations, exploration gates, companion effects, boss lane damage, critical/regen caps and schema-2/3 migration.
+- Real WebGL browser checks passed for the large viewport, all classes/bosses/races, third-person movement, camera swaps, atlas navigation/cache collection, companion hiring/switching, faction choice and tactics; 390 × 844 and 320 × 740 layouts are covered.
+- Standalone native Android build succeeded with Hermes, ARM64/x86_64 Expo GL libraries and sixteen bundled WAV assets. Package/version/minimum SDK and APK signature were inspected; the signing certificate matches 0.3.0.
+
+Final GitHub Actions/emulator results and published artifact checksums will be added after release verification.
+
 ## 14 October 2026 — 0.3.0: heroes take shape
 
 This release replaces the previous icon-based presentation with an original 3D chibi hero, visible worn gear, monsters and boss models. It adds fourteen class kits, twenty-eight active abilities, customization, rarity icons/colors, original music/SFX and an English interface. See [CHANGELOG.md](CHANGELOG.md) and [the class guide](docs/CLASSES.md).
